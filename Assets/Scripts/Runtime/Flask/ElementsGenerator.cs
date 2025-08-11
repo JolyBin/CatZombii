@@ -6,10 +6,10 @@ namespace Core.Flask
 {
     public class ElementsGenerator
     {
-        private readonly BaseElement[] _elements;
+        private readonly Element[] _elements;
         private readonly List<int> _elemntIndexes;
 
-        public ElementsGenerator(BaseElement[] elements, int maxElementPool)
+        public ElementsGenerator(Element[] elements, int maxElementPool)
         {
             _elements = elements;
             _elemntIndexes = new List<int>();
@@ -23,9 +23,9 @@ namespace Core.Flask
             }
         }
 
-        public BaseElement[] GetElements(int size, int maxSize)
+        public Element[] GetElements(int size, int maxSize)
         {
-            BaseElement[] resultsArray = new BaseElement[size];
+            Element[] resultsArray = new Element[size];
 
             int repitCount = 1;
             for (int i = 0; i < resultsArray.Length; i++)
@@ -40,7 +40,7 @@ namespace Core.Flask
             return resultsArray;
         }
 
-        private BaseElement GetRandomElement(BaseElement exclusiveElement = null)
+        private Element GetRandomElement(Element exclusiveElement = null)
         {
             int rndIndex = Random.Range(0, _elemntIndexes.Count);
             int elementIndex = _elemntIndexes[rndIndex];

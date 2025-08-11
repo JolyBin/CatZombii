@@ -10,7 +10,7 @@ namespace Core.Flask.UI
 
         [SerializeField] private Image _texture;
 
-        public UIBall SetConfig(BaseElement element)
+        public UIBall SetConfig(Element element)
         {
             _texture.sprite = element.Texture;
             return this;

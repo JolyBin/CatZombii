@@ -48,7 +48,7 @@ namespace Core.Flask.UI
             _button.onClick.AddListener(() => ButtonClickCommand?.Invoke());
         }
 
-        public void SetElements(BaseElement[] startElements)
+        public void SetElements(Element[] startElements)
         {
             _sequence.Complete();
             _sequence = DOTween.Sequence();
@@ -58,7 +58,7 @@ namespace Core.Flask.UI
             }
         }
 
-        public void AddElement(BaseElement startElements, bool isCompleteTween = true)
+        public void AddElement(Element startElements, bool isCompleteTween = true)
         {
             UIBall uiBall = _ballsPool.GetFreePooledObject();
             uiBall.SetConfig(startElements);
@@ -99,7 +99,7 @@ namespace Core.Flask.UI
                 .OnComplete(() => _ballsPool.TryReturnToPool(selectedBall));
         }
 
-        public void RemoveAllElements(BaseElement[] newElements)
+        public void RemoveAllElements(Element[] newElements)
         {
             if(_sequence.IsPlaying())
             {

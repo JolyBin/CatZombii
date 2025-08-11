@@ -32,7 +32,7 @@ namespace Core.Flask
         {
             UIFlaskWindow window = _uiService.Show<UIFlaskWindow>();
             _actions = new();
-            BaseElement[] elements = Resources.LoadAll<BaseElement>("Elements");
+            Element[] elements = Resources.LoadAll<Element>("Elements");
             UIFlask[] uIFlasks = window.GetUIFlasks(FLASK_COUNT);
             Flask[] flasks = new Flask[uIFlasks.Length];
             _generator = new ElementsGenerator(elements, 500);
@@ -53,12 +53,12 @@ namespace Core.Flask
             }
         }
 
-        private void InitializeFlasks(BaseElement[] elements, Flask[] flasks, UIFlask[] uIFlasks, int maxSize)
+        private void InitializeFlasks(Element[] elements, Flask[] flasks, UIFlask[] uIFlasks, int maxSize)
         {
             
             for (int i = 0; i < flasks.Length - 2; i++)
             {
-                BaseElement[] generatorResults = _generator.GetElements(4, 4);
+                Element[] generatorResults = _generator.GetElements(4, 4);
                 uIFlasks[i].InitializeFlask(4);
                 uIFlasks[i].SetElements(generatorResults);
                 _uiFlasks.Add(new Flask(4, generatorResults), uIFlasks[i]);
@@ -66,7 +66,7 @@ namespace Core.Flask
 
             for (int i = flasks.Length - 2; i < flasks.Length; i++)
             {
-                BaseElement[] generatorResults = _generator.GetElements(0, 4);
+                Element[] generatorResults = _generator.GetElements(0, 4);
                 uIFlasks[i].InitializeFlask(4);
                 uIFlasks[i].SetElements(generatorResults);
                 _uiFlasks.Add(new Flask(4, generatorResults), uIFlasks[i]);
@@ -75,7 +75,7 @@ namespace Core.Flask
 
         private void UpdateFlask(KeyValuePair<Flask, UIFlask> keyValue)
         {
-            BaseElement[] generatorResults = _generator.GetElements(4, 4);
+            Element[] generatorResults = _generator.GetElements(4, 4);
             keyValue.Value.RemoveAllElements(generatorResults);
             keyValue.Key.UpdateFlask(generatorResults);
         }
@@ -108,7 +108,7 @@ namespace Core.Flask
         {
             if(flask.IsPossiblePushElement)
             {
-                BaseElement element = _selectedFlask.PopElement();
+                Element element = _selectedFlask.PopElement();
                 _uiFlasks[_selectedFlask].RemoveElement();
                 _uiFlasks[flask].AddElement(element);
                 flask.PushElement(element);

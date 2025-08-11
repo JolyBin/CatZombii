@@ -6,37 +6,37 @@ namespace Core.Flask
 {
     public class Flask: IAction
     {
-        public event Action<BaseElement> RepitsCommand;
+        public event Action<Element> RepitsCommand;
         public bool IsPossiblePushElement => _stack.Count < _maxSize;
         public bool IsPossiblePopElement => _stack.Count > 0;
 
-        private readonly Stack<BaseElement> _stack;
+        private readonly Stack<Element> _stack;
         private readonly int _maxSize;
         private readonly int _repitNumber;
 
-        public Flask(int maxSize, BaseElement[] startElements)
+        public Flask(int maxSize, Element[] startElements)
         {
             _stack = new(startElements);
             _maxSize = maxSize;
             _repitNumber = maxSize;
         }
 
-        public Flask(int maxSize, BaseElement[] startElements, int repitNumber)
+        public Flask(int maxSize, Element[] startElements, int repitNumber)
         {
             _stack = new(startElements);
             _maxSize = maxSize;
             _repitNumber = repitNumber;
         }
 
-        public BaseElement PopElement() => _stack.Pop();
+        public Element PopElement() => _stack.Pop();
 
-        public void PushElement(BaseElement element)
+        public void PushElement(Element element)
         {
             _stack.Push(element);
             CheckRepits();
         }
 
-        public void UpdateFlask(BaseElement[] startElements)
+        public void UpdateFlask(Element[] startElements)
         {
             _stack.Clear();
             for (int i = 0; i < startElements.Length; i++)
@@ -49,10 +49,10 @@ namespace Core.Flask
         {
             if (_stack.Count < _repitNumber)
                 return;
-            BaseElement firstElement = _stack.Peek();
-            foreach (BaseElement element in _stack)
+            Element firstElement = _stack.Peek();
+            foreach (Element element in _stack)
             {
-                if (element != firstElement)
+                if (element.ID != firstElement.ID)
                     return;
             }
             _stack.Clear();
