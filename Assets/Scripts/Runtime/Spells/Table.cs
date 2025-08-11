@@ -32,7 +32,7 @@ namespace Core.Spells
                     }
                     else
                     {
-                        if (!currentChain.Chains.TryGetValue(currentElement.ID, out currentChain))
+                        if (!currentChain.Chains.ContainsKey(currentElement.ID))
                         {
                             Chain newChain = new Chain(currentElement.ID);
                             currentChain.Chains.Add(currentElement.ID, newChain);
@@ -63,7 +63,7 @@ namespace Core.Spells
                 }
             }
             spell = currentChain.Spell;
-            return true;
+            return spell != null;
         }
     }
 }

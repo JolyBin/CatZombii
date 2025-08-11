@@ -9,10 +9,12 @@ namespace Core.Flask
 {
     public class FlaskController : IAction
     {
+
+
         private const int FLASK_MAX_SIZE = 4;
         private const int FLASK_COUNT = 6;
 
-
+        public event Action<Element> OnFlaskFull;
         public event Action MoveCommand;
 
         private readonly IUIService _uiService;
@@ -46,7 +48,11 @@ namespace Core.Flask
             foreach(var flaskKeyValue in _uiFlasks)
             {
                 flaskKeyValue.Value.ButtonClickCommand += () => ReactClickCommand(flaskKeyValue.Key);
-                flaskKeyValue.Key.RepitsCommand += (_) => UpdateFlask(flaskKeyValue);
+                flaskKeyValue.Key.RepitsCommand += (Element element) => 
+                {
+                    OnFlaskFull?.Invoke(element);
+                    UpdateFlask(flaskKeyValue);
+                };
 
                 _actions.Add(flaskKeyValue.Value);
                 _actions.Add(flaskKeyValue.Key);
@@ -126,6 +132,7 @@ namespace Core.Flask
             foreach(var action in _actions)
                 action.ClearAction();
             _actions = new();
+            //OnFlaskFull = null;
         }
     }
 }

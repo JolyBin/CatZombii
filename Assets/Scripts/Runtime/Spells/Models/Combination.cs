@@ -11,8 +11,8 @@ namespace Core.Spells
     {
         public Element[] Elements { get => _elements; }
 
-        [field: SerializeField] public Spell Spell { get; }
+        [field: SerializeField] public Spell Spell { get; private set; }
 
-        [SerializeField] private readonly  Element[] _elements;
+        [SerializeField] private  Element[] _elements;
     }
 }

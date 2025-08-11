@@ -9,7 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2fd22146b285642439bb32cd181c04b0, type: 3}
+  m_Script: {fileID: 11500000, guid: 91dd83f57d4fcc24dbec06298999304b, type: 3}
   m_Name: Fire
   m_EditorClassIdentifier: 
+  <ID>k__BackingField: 2
   <Texture>k__BackingField: {fileID: 21300000, guid: 6443fdebe97d01341b9f593470ae83da, type: 3}

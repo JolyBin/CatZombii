@@ -1,4 +1,5 @@
 using Core.Flask;
+using Core.Spells;
 using Core.Steps.UI;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -13,20 +14,23 @@ namespace Core.Steps
 
         private readonly FlaskController _flaskController;
         private readonly IUIService _uiService;
+        private readonly TableController _tableController;
 
         private StepsWindow _window;
         private StepState _currentState;
         private int _currentNumbersStep;
 
-        public StepsController(IUIService uIService)
+        public StepsController(IUIService uIService, Book currentBook)
         {
             _flaskController = new FlaskController(uIService);
+            _tableController = new TableController(currentBook, _flaskController, uIService);
             _uiService = uIService;
         }
 
         public void Init()
         {
             _flaskController.Init();
+            
             _window = _uiService.Show<StepsWindow>();
             _currentNumbersStep = 0;
             SetPlayerState();

@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91dd83f57d4fcc24dbec06298999304b, type: 3}
-  m_Name: Water
+  m_Script: {fileID: 11500000, guid: 2d61adbc61f928a4bb697128d3406d2e, type: 3}
+  m_Name: GreenSpel
   m_EditorClassIdentifier: 
-  <ID>k__BackingField: 3
-  <Texture>k__BackingField: {fileID: 21300000, guid: f94a82de0a947e24e847bae1e6f7a330, type: 3}
+  <Name>k__BackingField: "<color=#00FF00>\u0417\u0435\u043B\u0451\u043D\u0430\u044F
+    \u0416\u0438\u0436\u0430</color>"

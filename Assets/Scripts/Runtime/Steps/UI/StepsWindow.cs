@@ -16,7 +16,7 @@ namespace Core.Steps.UI
         public override void Show()
         {
             base.Show();
-            _endStepButton.onClick.AddListener(() => EndStepButtonClickCommand.Invoke());
+            //_endStepButton.onClick.AddListener(() => EndStepButtonClickCommand.Invoke());
         }
 
         public override void Hide(Action onHide = null)
