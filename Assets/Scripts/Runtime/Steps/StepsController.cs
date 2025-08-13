@@ -9,8 +9,8 @@ namespace Core.Steps
 {
     public class StepsController
     {
-        private const int _maxSteps = 10;
-        private const int _stepAdditive = 4;
+        private const int _maxSteps = 100;
+        private const int _stepAdditive = 100;
 
         private readonly FlaskController _flaskController;
         private readonly IUIService _uiService;
