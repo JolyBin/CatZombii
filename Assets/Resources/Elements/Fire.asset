@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Fire
   m_EditorClassIdentifier: 
   <ID>k__BackingField: 2
-  <Texture>k__BackingField: {fileID: 21300000, guid: 6443fdebe97d01341b9f593470ae83da, type: 3}
+  <Texture>k__BackingField: {fileID: -43313383, guid: 168ffdeea5a15824e9a81ab03bba82a7, type: 3}
   <Color>k__BackingField: {r: 0.6886792, g: 0.016242431, b: 0.016242431, a: 1}

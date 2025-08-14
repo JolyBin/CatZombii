@@ -22,7 +22,7 @@ namespace Core.Steps.UI
         public override void Hide(Action onHide = null)
         {
             base.Hide(onHide);
-            _endStepButton.onClick.RemoveAllListeners();
+            //_endStepButton.onClick.RemoveAllListeners();
         }
 
         public void SetStepCounerText(int value)
