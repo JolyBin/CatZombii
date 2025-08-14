@@ -18,7 +18,7 @@ namespace Core.Spells
         public TableController(Book currentBook, FlaskController flaskController, IUIService uiService)
         {
             _uiService = uiService;
-            _table = new(currentBook.Combination);
+            _table = new(currentBook.Combinations);
             _currentElements = new ();
             _window = _uiService.Show<UITableWindow>();
 

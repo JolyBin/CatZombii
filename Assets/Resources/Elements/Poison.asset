@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 91dd83f57d4fcc24dbec06298999304b, type: 3}
-  m_Name: Fire
+  m_Name: Poison
   m_EditorClassIdentifier: 
-  <ID>k__BackingField: 4
-  <Texture>k__BackingField: {fileID: -43313383, guid: 168ffdeea5a15824e9a81ab03bba82a7, type: 3}
-  <Color>k__BackingField: {r: 0.9921569, g: 0.16078432, b: 0.18823531, a: 1}
+  <ID>k__BackingField: 6
+  <Texture>k__BackingField: {fileID: 1614108535, guid: 168ffdeea5a15824e9a81ab03bba82a7, type: 3}
+  <Color>k__BackingField: {r: 0.8078432, g: 0.40000004, b: 0.8313726, a: 1}

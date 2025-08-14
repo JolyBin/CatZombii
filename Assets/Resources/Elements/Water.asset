@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91dd83f57d4fcc24dbec06298999304b, type: 3}
   m_Name: Water
   m_EditorClassIdentifier: 
-  <ID>k__BackingField: 3
+  <ID>k__BackingField: 7
   <Texture>k__BackingField: {fileID: -1875338709, guid: 168ffdeea5a15824e9a81ab03bba82a7, type: 3}
-  <Color>k__BackingField: {r: 0.09251513, g: 0.15774065, b: 0.5943396, a: 1}
+  <Color>k__BackingField: {r: 0, g: 0.5803922, b: 0.87843144, a: 1}

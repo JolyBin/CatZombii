@@ -23,22 +23,24 @@ namespace Core.Flask
         private Dictionary<Flask, UIFlask> _uiFlasks = new();
         private ElementsGenerator _generator;
         private List<IAction> _actions = new();
+        private Element[] _uniqElements;
 
-        public FlaskController(IUIService uiService)
+        public FlaskController(IUIService uiService, Element[] currentElements)
         {
             _uiService = uiService;
+            _uniqElements = currentElements;
             _uiFlasks = new();
+
         }
 
         public void Init()
         {
             UIFlaskWindow window = _uiService.Show<UIFlaskWindow>();
             _actions = new();
-            Element[] elements = Resources.LoadAll<Element>("Elements");
             UIFlask[] uIFlasks = window.GetUIFlasks(FLASK_COUNT);
             Flask[] flasks = new Flask[uIFlasks.Length];
-            _generator = new ElementsGenerator(elements, 500);
-            InitializeFlasks(elements, flasks, uIFlasks, FLASK_MAX_SIZE);
+            _generator = new ElementsGenerator(_uniqElements, 500);
+            InitializeFlasks(_uniqElements, flasks, uIFlasks, FLASK_MAX_SIZE);
         }
 
 

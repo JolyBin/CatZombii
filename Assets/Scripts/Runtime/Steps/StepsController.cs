@@ -22,7 +22,7 @@ namespace Core.Steps
 
         public StepsController(IUIService uIService, Book currentBook)
         {
-            _flaskController = new FlaskController(uIService);
+            _flaskController = new FlaskController(uIService, currentBook.UniqElements);
             _tableController = new TableController(currentBook, _flaskController, uIService);
             _uiService = uIService;
         }
