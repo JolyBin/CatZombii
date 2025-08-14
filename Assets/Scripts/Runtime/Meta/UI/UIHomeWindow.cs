@@ -4,7 +4,7 @@ using Utility.Services.UI;
 
 namespace Meta.UI
 {
-    public class HomeWindow : UIWindow
+    public class UIHomeWindow : UIWindow
     {
         public event Action OnClickPlayButton;
         public event Action OnClickCharactersButton;
@@ -24,6 +24,8 @@ namespace Meta.UI
         {
             _playButton.onClick.RemoveAllListeners();
             _charactersButton.onClick.RemoveAllListeners();
+            OnClickPlayButton = null;
+            OnClickCharactersButton = null;
             base.Hide(onHide);
         }
     }

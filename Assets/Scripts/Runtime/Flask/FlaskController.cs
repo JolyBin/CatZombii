@@ -65,7 +65,7 @@ namespace Core.Flask
             for (int i = 0; i < flasks.Length - 2; i++)
             {
                 Element[] generatorResults = _generator.GetElements(4, 4);
-                uIFlasks[i].InitializeFlask(4);
+                uIFlasks[i].InitializeFlask();
                 uIFlasks[i].SetElements(generatorResults);
                 _uiFlasks.Add(new Flask(4, generatorResults), uIFlasks[i]);
             }
@@ -73,7 +73,7 @@ namespace Core.Flask
             for (int i = flasks.Length - 2; i < flasks.Length; i++)
             {
                 Element[] generatorResults = _generator.GetElements(0, 4);
-                uIFlasks[i].InitializeFlask(4);
+                uIFlasks[i].InitializeFlask();
                 uIFlasks[i].SetElements(generatorResults);
                 _uiFlasks.Add(new Flask(4, generatorResults), uIFlasks[i]);
             }

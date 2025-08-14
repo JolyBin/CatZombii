@@ -1,22 +1,20 @@
-using Core.Flask;
 using Core.Spells;
 using Core.Steps;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+namespace Meta
 {
-    [SerializeField] private UIService _uiService;
-    [SerializeField] private Book _currentBook;
-
-    private StepsController _stepsController;
-
-    private void Start()
+    public class GameManager : MonoBehaviour
     {
-        _stepsController = new StepsController(_uiService, _currentBook);
-        _stepsController.Init();
+        [SerializeField] private UIService _uiService;
+        [SerializeField] private Book _startBook;
 
+        private HomeController _homeController;
 
+        private void Start()
+        {
+            _uiService.HideAll();
+            _homeController = new HomeController(_uiService, _startBook);
+        }
     }
 }

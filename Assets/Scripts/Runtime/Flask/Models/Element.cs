@@ -8,5 +8,7 @@ namespace Core.Flask.Models
     {
         [field: SerializeField] public int ID { get; private set; }
         [field: SerializeField] public Sprite Texture { get; private set; }
+
+        [field: SerializeField] public Color Color { get; private set; }
     }
 }
