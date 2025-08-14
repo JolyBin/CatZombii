@@ -8,21 +8,22 @@ namespace Core.Steps.UI
 {
     public class StepsWindow : UIWindow
     {
-        public event Action EndStepButtonClickCommand;
+        public event Action OnClickHomeButton;
 
-        [SerializeField] private Button _endStepButton;
+        [SerializeField] private Button _homeButton;
         [SerializeField] private TextMeshProUGUI _stepCounterTXT, _currentStateTXT;
 
         public override void Show()
         {
+            _homeButton.onClick.AddListener(() => OnClickHomeButton?.Invoke()); 
             base.Show();
-            //_endStepButton.onClick.AddListener(() => EndStepButtonClickCommand.Invoke());
         }
 
         public override void Hide(Action onHide = null)
         {
+            OnClickHomeButton = null;
+            _homeButton.onClick.RemoveAllListeners();
             base.Hide(onHide);
-            //_endStepButton.onClick.RemoveAllListeners();
         }
 
         public void SetStepCounerText(int value)

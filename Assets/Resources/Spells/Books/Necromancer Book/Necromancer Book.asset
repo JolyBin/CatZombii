@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1191c0febfbdf3748b8c999fa2863013, type: 3}
+  m_Name: Necromancer Book
+  m_EditorClassIdentifier: 
+  _combinations:
+  - {fileID: 11400000, guid: b2666331a20a5754bb55b9d75f3ebff9, type: 2}
+  - {fileID: 11400000, guid: 24328b9f32298674195b06467db8419c, type: 2}
+  - {fileID: 11400000, guid: 1902b89089422564e88486aac2c2e998, type: 2}
+  - {fileID: 11400000, guid: ff82a80e53246834ea6c1e40f7b38dd6, type: 2}
+  _uniqElements:
+  - {fileID: 11400000, guid: 435a060fcb5e6a549a1497844a03d1b0, type: 2}
+  - {fileID: 11400000, guid: bf6f2198b190f5645b66b8dba734f1a2, type: 2}

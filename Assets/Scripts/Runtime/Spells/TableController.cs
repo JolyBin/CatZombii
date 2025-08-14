@@ -35,12 +35,17 @@ namespace Core.Spells
         {
             Spell spell;
             if (_table.TryGetSpell(_currentElements.ToArray(), out spell))
-                _window.ShowResult(true, $"ÎÃÎ, Ó ÒÅÁß ÏÎËÓ×ÈËÀÑÜ ÍÅÎÁÛ×ÍÀß ÆÈÆÀ: {spell.Name}");
+                _window.ShowResult(true, spell.Name);
             else
-                _window.ShowResult(false, $"ÌÄÀ, Ó ÒÅÁß ÏÎËÓ×ÈËÀÑÜ ÎÁÛ×ÍÀß ÆÈÆÀ");
+                _window.ShowResult(false, $"Íè÷åãî íå ïîëó÷èëîñü((");
 
             _currentElements = new();
             _window.ClearFlasks();
+        }
+
+        public void Exit()
+        {
+            _window.Hide();
         }
     }
 }

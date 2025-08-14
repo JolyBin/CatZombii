@@ -32,6 +32,7 @@ namespace Core.Spells.UI
         public override void Hide(Action onHide = null)
         {
             _checkCombinationButton.onClick.RemoveAllListeners();
+            OnClickCheckCombinationButton = null;
             base.Hide(onHide);
         }
 

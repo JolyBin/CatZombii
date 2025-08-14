@@ -1,9 +1,10 @@
 using Core.Flask.Models;
 using Core.Flask.UI;
+using System;
 using System.Collections.Generic;
+using UnityEditor.PackageManager.UI;
 using UnityEngine;
 using Utility.Services.UI;
-using System;
 
 namespace Core.Flask
 {
@@ -24,6 +25,7 @@ namespace Core.Flask
         private ElementsGenerator _generator;
         private List<IAction> _actions = new();
         private Element[] _uniqElements;
+        UIFlaskWindow _window;
 
         public FlaskController(IUIService uiService, Element[] currentElements)
         {
@@ -35,9 +37,9 @@ namespace Core.Flask
 
         public void Init()
         {
-            UIFlaskWindow window = _uiService.Show<UIFlaskWindow>();
+            _window = _uiService.Show<UIFlaskWindow>();
             _actions = new();
-            UIFlask[] uIFlasks = window.GetUIFlasks(FLASK_COUNT);
+            UIFlask[] uIFlasks = _window.GetUIFlasks(FLASK_COUNT);
             Flask[] flasks = new Flask[uIFlasks.Length];
             _generator = new ElementsGenerator(_uniqElements, 500);
             InitializeFlasks(_uniqElements, flasks, uIFlasks, FLASK_MAX_SIZE);
@@ -135,6 +137,13 @@ namespace Core.Flask
                 action.ClearAction();
             _actions = new();
             //OnFlaskFull = null;
+        }
+
+        public void Exit()
+        {
+            ClearAction();
+            OnFlaskFull = null;
+            _window.Hide();
         }
     }
 }

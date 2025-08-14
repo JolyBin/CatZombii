@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1191c0febfbdf3748b8c999fa2863013, type: 3}
+  m_Name: Wizard Book
+  m_EditorClassIdentifier: 
+  _combinations:
+  - {fileID: 11400000, guid: 4a734fb0ed7d67a45aacda48c891fd24, type: 2}
+  - {fileID: 11400000, guid: acb1f43bd8fe2b945a41c53d8703b337, type: 2}
+  - {fileID: 11400000, guid: ef56b0cf31f2d4944a72424bcebc8041, type: 2}
+  - {fileID: 11400000, guid: 486d08255c098c34196a7084c00ac8c4, type: 2}
+  _uniqElements:
+  - {fileID: 11400000, guid: f218f900823979f418512da3d93cfc2f, type: 2}
+  - {fileID: 11400000, guid: 9f18b01c5b03e924fba8cfb979bdaf06, type: 2}
+  - {fileID: 11400000, guid: 9d14bf5a1447a6543a62cdad9e09cb4d, type: 2}

@@ -24,11 +24,13 @@ namespace Core.Spells
                     Element currentElement = combination.Elements[i];
                     if(i == 0)
                     {
-                        if(!_allCombinations.TryGetValue(currentElement.ID, out currentChain))
+                        if(!_allCombinations.ContainsKey(currentElement.ID))
                         {
                             currentChain = new (currentElement.ID);
                             _allCombinations.Add(currentElement.ID, currentChain);
                         }
+                        else
+                            currentChain = _allCombinations[currentElement.ID];
                     }
                     else
                     {
@@ -38,6 +40,8 @@ namespace Core.Spells
                             currentChain.Chains.Add(currentElement.ID, newChain);
                             currentChain = newChain;
                         }
+                        else
+                            currentChain = currentChain.Chains[currentElement.ID];
                     }
                 }
                 currentChain.SetSpell(combination.Spell);

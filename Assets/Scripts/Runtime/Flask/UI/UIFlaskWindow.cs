@@ -32,6 +32,7 @@ namespace Core.Flask.UI
 
         public override void Hide(Action onHide = null)
         {
+            _flaskPool?.ReturnObjectsToPool();
             base.Hide(onHide);
             //TODO предусмотреть очистку ресурсов, если нужно
         }

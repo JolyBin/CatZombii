@@ -2,6 +2,7 @@ using Core.Flask;
 using Core.Spells;
 using Core.Steps.UI;
 using Cysharp.Threading.Tasks;
+using Meta;
 using UnityEngine;
 using Utility.Services.UI;
 
@@ -19,19 +20,21 @@ namespace Core.Steps
         private StepsWindow _window;
         private StepState _currentState;
         private int _currentNumbersStep;
+        private HomeController _homeController;
 
-        public StepsController(IUIService uIService, Book currentBook)
+        public StepsController(IUIService uIService, Book currentBook, HomeController homeController)
         {
             _flaskController = new FlaskController(uIService, currentBook.UniqElements);
             _tableController = new TableController(currentBook, _flaskController, uIService);
             _uiService = uIService;
+            _homeController = homeController;
         }
 
         public void Init()
         {
-            _flaskController.Init();
-            
             _window = _uiService.Show<StepsWindow>();
+            _flaskController.Init();
+            _window.OnClickHomeButton += Exit;
             _currentNumbersStep = 0;
             SetPlayerState();
         }
@@ -46,7 +49,6 @@ namespace Core.Steps
 
             _flaskController.SubscribeToMove();
             _flaskController.MoveCommand += ToStep;
-            _window.EndStepButtonClickCommand += SetEnemyStep;
         }
 
         private async void SetEnemyStep()
@@ -66,6 +68,15 @@ namespace Core.Steps
             {
                 SetEnemyStep();
             }
+        }
+
+        private void Exit()
+        {
+            _window.Hide();
+            _flaskController.Exit();
+            _tableController.Exit();
+            _homeController.OpenWindow();
+
         }
     }
 

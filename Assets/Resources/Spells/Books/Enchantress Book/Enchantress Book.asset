@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1191c0febfbdf3748b8c999fa2863013, type: 3}
+  m_Name: Enchantress Book
+  m_EditorClassIdentifier: 
+  _combinations:
+  - {fileID: 11400000, guid: f98fc47670617be4da7d6e815f0e6c4e, type: 2}
+  - {fileID: 11400000, guid: 5f437e9ba1b142c40996fd8f19c12a04, type: 2}
+  - {fileID: 11400000, guid: 86a92eaa14ece3e4cb0553e9716a798e, type: 2}
+  - {fileID: 11400000, guid: ff67c56c77c10ac4e8ef47395d6f4afe, type: 2}
+  _uniqElements:
+  - {fileID: 11400000, guid: 9b69cf5c4994fe54884c7e56eeff6a3c, type: 2}
+  - {fileID: 11400000, guid: 9f18b01c5b03e924fba8cfb979bdaf06, type: 2}

@@ -21,7 +21,7 @@ namespace Meta
             OpenWindow();
         }
 
-        private void OpenWindow()
+        public void OpenWindow()
         {
             _homeWindow = _uiService.Show<UIHomeWindow>();
             _homeWindow.OnClickPlayButton += StartGame;
@@ -31,7 +31,7 @@ namespace Meta
         private void StartGame()
         {
             _homeWindow.Hide();
-            _stepsController = new StepsController(_uiService, _heroController.SeveBook);
+            _stepsController = new StepsController(_uiService, _heroController.SeveBook, this);
             _stepsController.Init();
         }
 
