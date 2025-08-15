@@ -31,6 +31,10 @@ namespace Meta
                     _currentSelectedBook = uiHero.HeroBook;
                     uiHero.Init(true);
                 }
+                else
+                {
+                    uiHero.Init(false);
+                }
                 uiHero.OnHeroSelected += (value) => SelectedHero(value, uiHero);
             }
 
