@@ -1,3 +1,4 @@
+using Core.Spells;
 using System;
 using TMPro;
 using UnityEngine;
@@ -12,6 +13,16 @@ namespace Core.Steps.UI
 
         [SerializeField] private Button _homeButton;
         [SerializeField] private TextMeshProUGUI _stepCounterTXT, _currentStateTXT;
+        [SerializeField] private TextMeshProUGUI _nameHeroText;
+        [SerializeField] private Image _heroIconImage;
+        [SerializeField] private Image _classIconImage;
+
+        public void Init(Book currentBook)
+        {
+            _nameHeroText.text = currentBook.NameHero;
+            _heroIconImage.sprite = currentBook.HeroIcon;
+            _classIconImage.sprite = currentBook.IconClass;
+        }
 
         public override void Show()
         {

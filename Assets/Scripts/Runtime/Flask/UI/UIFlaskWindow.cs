@@ -1,5 +1,7 @@
 using System;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility.Collections;
 using Utility.Services.UI;
 
@@ -10,6 +12,9 @@ namespace Core.Flask.UI
         [SerializeField] private UIFlask _uiFlaskPrefab;
         [SerializeField] private Transform _poolContainer;
         [SerializeField] private RectTransform[] _falskPositions;
+        [SerializeField] private TextMeshProUGUI _nameHero;
+        [SerializeField] private Image _classIcon;
+        [SerializeField] private Image _heroPortret;
 
         private Pool<UIFlask> _flaskPool;
 

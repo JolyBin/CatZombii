@@ -21,9 +21,11 @@ namespace Core.Steps
         private StepState _currentState;
         private int _currentNumbersStep;
         private HomeController _homeController;
+        private Book _currentBook;
 
         public StepsController(IUIService uIService, Book currentBook, HomeController homeController)
         {
+            _currentBook = currentBook;
             _flaskController = new FlaskController(uIService, currentBook.UniqElements);
             _tableController = new TableController(currentBook, _flaskController, uIService);
             _uiService = uIService;
@@ -33,6 +35,7 @@ namespace Core.Steps
         public void Init()
         {
             _window = _uiService.Show<StepsWindow>();
+            _window.Init(_currentBook);
             _flaskController.Init();
             _window.OnClickHomeButton += Exit;
             _currentNumbersStep = 0;

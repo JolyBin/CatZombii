@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1191c0febfbdf3748b8c999fa2863013, type: 3}
   m_Name: Enchantress Book
   m_EditorClassIdentifier: 
+  NameHero: Zlaxxalz
+  ClassHero: Enchantress
+  IconClass: {fileID: 21300000, guid: 7c590330b56f5478fa08eebb283dff0c, type: 3}
+  HeroIcon: {fileID: 21300000, guid: 30fe8c7a3798a494094acabe9498a765, type: 3}
   _combinations:
   - {fileID: 11400000, guid: f98fc47670617be4da7d6e815f0e6c4e, type: 2}
   - {fileID: 11400000, guid: 5f437e9ba1b142c40996fd8f19c12a04, type: 2}
