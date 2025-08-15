@@ -13,11 +13,13 @@ namespace Meta
         private UIHeroesWindow _uiHeroesWindow;
         private Book _currentSelectedBook;
         private Book _saveBook;
+        private EquipmentController _equipmentController;
 
         public HeroController(IUIService uiService, Book startBook)
         {
             _uiService = uiService;
             _saveBook = startBook;
+            _equipmentController = new(uiService);
         }
 
         public void OpenWindow()
@@ -36,6 +38,7 @@ namespace Meta
                     uiHero.Init(false);
                 }
                 uiHero.OnHeroSelected += (value) => SelectedHero(value, uiHero);
+                uiHero.OnInfoButtonClick += (value) => _equipmentController.OpenWindow(value);
             }
 
             _uiHeroesWindow.OnClickHomeButton += HideWindow;
