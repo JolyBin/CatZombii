@@ -11,10 +11,11 @@ namespace Core.Spells
         public Combination[] Combinations => _combinations.ToArray();
         public Element[] UniqElements => _uniqElements;
 
-        [field: SerializeField] public string NameHero;
-        [field: SerializeField] public string ClassHero;
-        [field: SerializeField] public Sprite IconClass;
-        [field: SerializeField] public Sprite HeroIcon;
+        [field: SerializeField] public string NameHero { get; private set; }
+        [field: SerializeField] public string ClassHero { get; private set; }
+        [field: SerializeField] public int HP { get; private set; } = 200;
+        [field: SerializeField] public Sprite IconClass { get; private set; }
+        [field: SerializeField] public Sprite HeroIcon { get; private set; }
 
         [SerializeField] private Combination[] _combinations;
 

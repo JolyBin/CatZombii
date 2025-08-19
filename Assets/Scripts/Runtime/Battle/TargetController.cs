@@ -7,11 +7,10 @@ namespace Core.Battle
 {
     public class TargetController
     {
-        public event Action OnAllTargetsDie;
-        public event Action OnAttack;
+        public event Action<Health, Health[]> OnAttack;
+        public event Action<int, int> OnTimerChanged;
         public int CurrentTimer { get; private set; }
 
-        private int _damage;
         private int _timerStep;
         private int _startTimer;
         private List<Health> _targetsList;
@@ -19,9 +18,8 @@ namespace Core.Battle
 
         private bool _isLive;
 
-        public TargetController(int dmage, int timer)
+        public TargetController(int timer)
         {
-            _damage = dmage;
             CurrentTimer = timer;
             _startTimer = timer;
             _timerStep = 100;
@@ -33,7 +31,7 @@ namespace Core.Battle
             _timerStep = 0;
         }
 
-        public void StartAttac()
+        public void ContinueAttack()
         {
             _timerStep = 100;
         }
@@ -41,10 +39,10 @@ namespace Core.Battle
         public void Die()
         {
             _isLive = false;
-            OnAllTargetsDie = null;
             _targetsList = new();
             _currentTarget = null;
             OnAttack = null;
+            OnTimerChanged = null;
         }
 
         public void StartAttack()
@@ -68,7 +66,6 @@ namespace Core.Battle
         {
             if(_targetsList.Count == 0)
             {
-                OnAllTargetsDie?.Invoke();
                 return;
             }
             Health primaryTarget = _targetsList[0];
@@ -91,21 +88,22 @@ namespace Core.Battle
             if(_currentTarget == null || _currentTarget.CurrentHP <= 0)
             {
                 SelectPrimaryTarget();
-                return;
+                if(_currentTarget == null || _currentTarget.CurrentHP <= 0)
+                    return;
             }
-            _currentTarget.TakeDamage(_damage);
+            OnAttack?.Invoke(_currentTarget, _targetsList.ToArray());
         }
 
         private async Task TimerAttack()
         {
             while (_isLive)
             {
+                OnTimerChanged?.Invoke(CurrentTimer, _startTimer);
                 CurrentTimer = Math.Clamp(CurrentTimer - _timerStep, 0, _startTimer);
                 if(CurrentTimer <= 0)
                 {
                     CurrentTimer = _startTimer;
                     AttackTarget();
-                    OnAttack?.Invoke();
                 }
                 await UniTask.Delay(_timerStep);
             }

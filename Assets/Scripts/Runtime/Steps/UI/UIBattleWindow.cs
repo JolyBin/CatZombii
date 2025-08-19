@@ -7,15 +7,15 @@ using Utility.Services.UI;
 
 namespace Core.Steps.UI
 {
-    public class StepsWindow : UIWindow
+    public class UIBattleWindow : UIWindow
     {
         public event Action OnClickHomeButton;
 
         [SerializeField] private Button _homeButton;
-        [SerializeField] private TextMeshProUGUI _stepCounterTXT, _currentStateTXT;
         [SerializeField] private TextMeshProUGUI _nameHeroText;
         [SerializeField] private Image _heroIconImage;
         [SerializeField] private Image _classIconImage;
+        [SerializeField] private Image _healthFiil;
 
         public void Init(Book currentBook)
         {
@@ -37,14 +37,9 @@ namespace Core.Steps.UI
             base.Hide(onHide);
         }
 
-        public void SetStepCounerText(int value)
+        public void SetHealth(int currentHP, int maxHP)
         {
-            _stepCounterTXT.text = string.Format("Numbers Step: {0}", value);
-        }
-
-        public void SetCurrentStateText(string state)
-        {
-            _currentStateTXT.text = string.Format("Current State:\n{0}", state);
+            _healthFiil.fillAmount = (float) currentHP / maxHP;
         }
     }
 }

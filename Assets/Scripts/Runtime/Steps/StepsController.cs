@@ -10,15 +10,11 @@ namespace Core.Steps
 {
     public class StepsController
     {
-        private const int _maxSteps = 100;
-        private const int _stepAdditive = 100;
-
         private readonly FlaskController _flaskController;
         private readonly IUIService _uiService;
         private readonly TableController _tableController;
 
-        private StepsWindow _window;
-        private StepState _currentState;
+        private UIBattleWindow _window;
         private int _currentNumbersStep;
         private HomeController _homeController;
         private Book _currentBook;
@@ -34,43 +30,12 @@ namespace Core.Steps
 
         public void Init()
         {
-            _window = _uiService.Show<StepsWindow>();
+            _window = _uiService.Show<UIBattleWindow>();
             _window.Init(_currentBook);
             _flaskController.Init();
             _window.OnClickHomeButton += Exit;
             _currentNumbersStep = 0;
-            SetPlayerState();
-        }
-
-        private void SetPlayerState()
-        {
-            _currentState = StepState.PlayerStep;
-            _window.SetCurrentStateText(_currentState.ToString());
-
-            _currentNumbersStep = Mathf.Clamp(_currentNumbersStep + _stepAdditive, 0, _maxSteps);
-            _window.SetStepCounerText(_currentNumbersStep);
-
             _flaskController.SubscribeToMove();
-            _flaskController.MoveCommand += ToStep;
-        }
-
-        private async void SetEnemyStep()
-        {
-            _currentState = StepState.EnemyStep;
-            _window.SetCurrentStateText(_currentState.ToString());
-            _flaskController.ClearAction();
-            await UniTask.WaitForSeconds(5f);
-            SetPlayerState();
-        }
-
-        private void ToStep()
-        {
-            _currentNumbersStep--;
-            _window.SetStepCounerText(_currentNumbersStep);
-            if (_currentNumbersStep == 0)
-            {
-                SetEnemyStep();
-            }
         }
 
         private void Exit()
@@ -81,11 +46,5 @@ namespace Core.Steps
             _homeController.OpenWindow();
 
         }
-    }
-
-    public enum StepState
-    {
-        PlayerStep,
-        EnemyStep
     }
 }

@@ -1,13 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Core.Battle
 {
-    public class Attacker : MonoBehaviour
+    public abstract class BaseAttackConfig: ScriptableObject
     {
-        private Health _currentTarget;
+        public abstract BaseAttack GetAttackClass();
+    }
 
+    public abstract class BaseAttack
+    {
+        public BaseAttack() { }
 
+        public abstract void Attack(Health currentTarget, Health[] allTarget);
     }
 }
