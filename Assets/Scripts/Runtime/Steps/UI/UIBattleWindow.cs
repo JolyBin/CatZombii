@@ -14,8 +14,14 @@ namespace Core.Steps.UI
         [SerializeField] private Button _homeButton;
         [SerializeField] private TextMeshProUGUI _nameHeroText;
         [SerializeField] private Image _heroIconImage;
+        [SerializeField] private Image _heroImage;
         [SerializeField] private Image _classIconImage;
         [SerializeField] private Image _healthFiil;
+        [SerializeField] private RectTransform[] _enemyPositions;
+        [SerializeField] private RectTransform[] _friendlyPositions;
+
+        private int _currentEnemyPositionIndex;
+        private int _currentFriendlyPositionIndex;
 
         public void Init(Book currentBook)
         {
@@ -26,8 +32,19 @@ namespace Core.Steps.UI
 
         public override void Show()
         {
+            _currentEnemyPositionIndex = 0;
+            _currentFriendlyPositionIndex = 0;
             _homeButton.onClick.AddListener(() => OnClickHomeButton?.Invoke()); 
             base.Show();
+        }
+
+        public void SetHero(Book heroBook)
+        {
+            
+            _heroIconImage.sprite = heroBook.HeroIcon;
+            _classIconImage.sprite = heroBook.IconClass;
+            _heroImage.sprite = heroBook.HeroIcon;
+            _nameHeroText.text = heroBook.NameHero;
         }
 
         public override void Hide(Action onHide = null)
@@ -40,6 +57,14 @@ namespace Core.Steps.UI
         public void SetHealth(int currentHP, int maxHP)
         {
             _healthFiil.fillAmount = (float) currentHP / maxHP;
+        }
+
+        public void SetEnemyPosition(RectTransform rect)
+        {
+            rect.SetParent(_enemyPositions[_currentEnemyPositionIndex], false);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            _currentEnemyPositionIndex++;
         }
     }
 }

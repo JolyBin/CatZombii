@@ -1,3 +1,4 @@
+using Core.Battle;
 using Core.Flask;
 using Core.Spells;
 using Core.Steps.UI;
@@ -15,17 +16,19 @@ namespace Core.Steps
         private readonly TableController _tableController;
 
         private UIBattleWindow _window;
-        private int _currentNumbersStep;
         private HomeController _homeController;
+        private BattleController _battleController;
         private Book _currentBook;
 
-        public StepsController(IUIService uIService, Book currentBook, HomeController homeController)
+
+        public StepsController(IUIService uIService, Book currentBook, HomeController homeController, BattleConfig currentlevel)
         {
             _currentBook = currentBook;
             _flaskController = new FlaskController(uIService, currentBook.UniqElements);
             _tableController = new TableController(currentBook, _flaskController, uIService);
             _uiService = uIService;
             _homeController = homeController;
+            _battleController = new(uIService, currentlevel, currentBook);
         }
 
         public void Init()
@@ -34,8 +37,8 @@ namespace Core.Steps
             _window.Init(_currentBook);
             _flaskController.Init();
             _window.OnClickHomeButton += Exit;
-            _currentNumbersStep = 0;
             _flaskController.SubscribeToMove();
+            _battleController.Init();
         }
 
         private void Exit()
@@ -43,6 +46,7 @@ namespace Core.Steps
             _window.Hide();
             _flaskController.Exit();
             _tableController.Exit();
+            _battleController.Exit();
             _homeController.OpenWindow();
 
         }

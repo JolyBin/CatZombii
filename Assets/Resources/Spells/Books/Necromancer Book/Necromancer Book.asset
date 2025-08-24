@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1191c0febfbdf3748b8c999fa2863013, type: 3}
   m_Name: Necromancer Book
   m_EditorClassIdentifier: 
-  NameHero: Qwas
-  ClassHero: Necromancer
-  IconClass: {fileID: 21300000, guid: 2055fd42ce4d8486295b232b0f3db096, type: 3}
-  HeroIcon: {fileID: 21300000, guid: 221af6d29276edb48bb47ad8ab8d37e5, type: 3}
+  <NameHero>k__BackingField: Qwas
+  <ClassHero>k__BackingField: Necromancer
+  <HP>k__BackingField: 200
+  <IconClass>k__BackingField: {fileID: 21300000, guid: 2055fd42ce4d8486295b232b0f3db096, type: 3}
+  <HeroIcon>k__BackingField: {fileID: 21300000, guid: 8343e3044380bc741bd4e202dafee4ad, type: 3}
   _combinations:
   - {fileID: 11400000, guid: b2666331a20a5754bb55b9d75f3ebff9, type: 2}
   - {fileID: 11400000, guid: 24328b9f32298674195b06467db8419c, type: 2}

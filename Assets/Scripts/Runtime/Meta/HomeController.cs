@@ -1,3 +1,4 @@
+using Core.Battle;
 using Core.Spells;
 using Core.Steps;
 using Meta.UI;
@@ -8,16 +9,18 @@ namespace Meta
 {
     public class HomeController
     {
-        [SerializeField] private IUIService _uiService;
+        private IUIService _uiService;
+        private BattleConfig _battleConfig;
 
         private UIHomeWindow _homeWindow;
         private StepsController _stepsController;
         private HeroController _heroController;
 
-        public HomeController(IUIService uiService, Book startBook)
+        public HomeController(IUIService uiService, Book startBook, BattleConfig battleConfig)
         {
             _uiService = uiService;
             _heroController = new HeroController(_uiService, startBook);
+            _battleConfig = battleConfig;
             OpenWindow();
         }
 
@@ -31,7 +34,7 @@ namespace Meta
         private void StartGame()
         {
             _homeWindow.Hide();
-            _stepsController = new StepsController(_uiService, _heroController.SeveBook, this);
+            _stepsController = new StepsController(_uiService, _heroController.SeveBook, this, _battleConfig);
             _stepsController.Init();
         }
 

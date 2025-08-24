@@ -20,8 +20,8 @@ namespace Core.Battle
 
         public TargetController(int timer)
         {
-            CurrentTimer = timer;
-            _startTimer = timer;
+            CurrentTimer = timer * 1000;
+            _startTimer = timer * 1000;
             _timerStep = 100;
             _targetsList = new();
         }

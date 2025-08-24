@@ -44,7 +44,7 @@ namespace Meta.UI
             base.Hide(onHide);
             OnBackButtonClick = null;
             _backButton.onClick.RemoveAllListeners();
-            _combinationPool.ReturnObjectsToPool();
+            _combinationPool?.ReturnObjectsToPool();
         }
 
         public void SetBook(Book book)

@@ -1,4 +1,5 @@
 using Core.Spells;
+using Core.Steps.UI;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Services.UI;
@@ -15,6 +16,7 @@ namespace Core.Battle
         private List<TargetController> _friendlyTargetControllers;
         private List<Health> _enemyHealthList;
         private List<TargetController> _enemyTargetControllers;
+        private UIBattleWindow _battleWindow;
 
         private BattleConfig _currentLevel;
         private Book _playerConfig;
@@ -23,11 +25,13 @@ namespace Core.Battle
         public BattleController(IUIService uIService, BattleConfig levelConfig, Book playerConfig)
         {
             _uIService = uIService;
+            _battleWindow = _uIService.Get<UIBattleWindow>();
             _currentLevel = levelConfig;
             _playerConfig = playerConfig;
 
             _friendlyhealthList = new();
             _enemyHealthList = new();
+            _enemyTargetControllers = new();
         }
 
         public void Init()
@@ -45,6 +49,7 @@ namespace Core.Battle
                 uiUnitHealthBar.SetHealth(newHealth.CurrentHP, newHealth.MaxHP);
                 uiUnitHealthBar.SetName(unit.Name);
                 uiUnitTimerbar.SetTimer(0, unit.AttackCooldown);
+                _battleWindow.SetEnemyPosition(uiUnitHealthBar.transform as RectTransform);
 
                 newHealth.OnChanged += uiUnitHealthBar.SetHealth;
                 targetController.OnTimerChanged += uiUnitTimerbar.SetTimer;
@@ -53,12 +58,20 @@ namespace Core.Battle
 
             Health heroHealth = new Health(_playerConfig.HP, 0);
             _friendlyhealthList.Add(heroHealth);
+            _battleWindow.SetHero(_playerConfig);
+            _battleWindow.SetHealth(heroHealth.CurrentHP, heroHealth.MaxHP);
+            heroHealth.OnChanged += _battleWindow.SetHealth;
 
             foreach(TargetController enemy in _enemyTargetControllers)
             {
                 enemy.AddTarget(heroHealth);
                 enemy.StartAttack();
             }
+        }
+
+        public void Exit()
+        {
+
         }
     }
 }

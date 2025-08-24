@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace Core.Battle
 {
+    [Serializable]
     public class UnitConfig
     {
         [field: SerializeField] public string Name { get; private set; }

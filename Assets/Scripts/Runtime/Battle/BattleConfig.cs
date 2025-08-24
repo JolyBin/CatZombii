@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Core.Battle
 {
-    [CreateAssetMenu(fileName = "Level ", menuName = "Battale Configs/Create Level Config")]
+    [CreateAssetMenu(fileName = "Level ", menuName = "Battle Configs/Create Level Config")]
     public class BattleConfig : ScriptableObject
     {
         [field: SerializeField] public Sprite Background { get; private set; }
