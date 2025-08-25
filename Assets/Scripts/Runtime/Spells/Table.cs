@@ -48,7 +48,7 @@ namespace Core.Spells
             }
         }
 
-        public bool TryGetSpell(Element[] elements, out Spell spell)
+        public bool TryGetSpell(Element[] elements, out BaseSpellConfig spell)
         {
             spell = null;
             Chain currentChain = new(0);

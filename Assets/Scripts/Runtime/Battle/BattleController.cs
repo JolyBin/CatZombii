@@ -8,30 +8,29 @@ namespace Core.Battle
 {
     public class BattleController
     {
-        public Health[] FriendlySquad => _friendlyhealthList.ToArray();
-        public Health[] EnemySquad => _enemyHealthList.ToArray();
+        public (Health health, TargetController targetController)[] FriendlySquad => _friendlyList.ToArray();
+        public (Health health, TargetController targetController)[] EnemySquad => _enemyList.ToArray();
 
         private IUIService _uIService;
-        private List<Health> _friendlyhealthList;
-        private List<TargetController> _friendlyTargetControllers;
-        private List<Health> _enemyHealthList;
-        private List<TargetController> _enemyTargetControllers;
+        private List<(Health health, TargetController targetController)> _friendlyList;
+        private List<(Health health, TargetController targetController)> _enemyList;
         private UIBattleWindow _battleWindow;
 
         private BattleConfig _currentLevel;
         private Book _playerConfig;
+        private TableController _tableController;
         
 
-        public BattleController(IUIService uIService, BattleConfig levelConfig, Book playerConfig)
+        public BattleController(IUIService uIService, BattleConfig levelConfig, Book playerConfig, TableController tableController)
         {
             _uIService = uIService;
             _battleWindow = _uIService.Get<UIBattleWindow>();
             _currentLevel = levelConfig;
             _playerConfig = playerConfig;
+            _tableController = tableController;
 
-            _friendlyhealthList = new();
-            _enemyHealthList = new();
-            _enemyTargetControllers = new();
+            _friendlyList = new();
+            _enemyList = new();
         }
 
         public void Init()
@@ -43,8 +42,7 @@ namespace Core.Battle
                 Health newHealth = new Health(unit.HP, unit.TargetPriority);
                 TargetController targetController = new TargetController(unit.AttackCooldown);
                 BaseAttack attack = unit.AttackConfig.GetAttackClass();
-                _enemyHealthList.Add(newHealth);
-                _enemyTargetControllers.Add(targetController);
+                _enemyList.Add((newHealth, targetController));
 
                 uiUnitHealthBar.SetHealth(newHealth.CurrentHP, newHealth.MaxHP);
                 uiUnitHealthBar.SetName(unit.Name);
@@ -57,16 +55,17 @@ namespace Core.Battle
             }
 
             Health heroHealth = new Health(_playerConfig.HP, 0);
-            _friendlyhealthList.Add(heroHealth);
+            _friendlyList.Add((heroHealth, null));
             _battleWindow.SetHero(_playerConfig);
             _battleWindow.SetHealth(heroHealth.CurrentHP, heroHealth.MaxHP);
             heroHealth.OnChanged += _battleWindow.SetHealth;
 
-            foreach(TargetController enemy in _enemyTargetControllers)
+            foreach(var enemy in _enemyList)
             {
-                enemy.AddTarget(heroHealth);
-                enemy.StartAttack();
+                enemy.targetController.AddTarget(heroHealth);
+                enemy.targetController.StartAttack();
             }
+            _tableController.OnSuccessfulMerge += (BaseSpell spell) => spell.ApplySpell(_enemyList.ToArray());
         }
 
         public void Exit()

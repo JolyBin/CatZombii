@@ -1,6 +1,7 @@
 using Core.Flask;
 using Core.Flask.Models;
 using Core.Spells.UI;
+using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility.Services.UI;
@@ -9,6 +10,8 @@ namespace Core.Spells
 {
     public class TableController
     {
+        public event Action<BaseSpell> OnSuccessfulMerge;
+
         private readonly IUIService _uiService;
 
         private UITableWindow _window;
@@ -33,11 +36,16 @@ namespace Core.Spells
 
         public void CheckRepit()
         {
-            Spell spell;
+            BaseSpellConfig spell;
             if (_table.TryGetSpell(_currentElements.ToArray(), out spell))
+            {
                 _window.ShowResult(true, spell.Name);
+                OnSuccessfulMerge?.Invoke(spell.GetSpell());
+            }
             else
+            {
                 _window.ShowResult(false, $"Ничего не получилось((");
+            }
 
             _currentElements = new();
             _window.ClearFlasks();
@@ -45,6 +53,7 @@ namespace Core.Spells
 
         public void Exit()
         {
+            OnSuccessfulMerge = null;
             _window.Hide();
         }
     }

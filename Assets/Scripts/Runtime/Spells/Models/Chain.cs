@@ -7,7 +7,7 @@ namespace Core.Spells
         public int ID { get; private set; }
         public Dictionary<int, Chain> Chains { get; private set; }
 
-        public Spell Spell { get; private set; }
+        public BaseSpellConfig Spell { get; private set; }
 
         public Chain(int id)
         {
@@ -15,7 +15,7 @@ namespace Core.Spells
             Chains = new Dictionary<int, Chain>();
         }
 
-        public void SetSpell(Spell spell)
+        public void SetSpell(BaseSpellConfig spell)
         { 
             Spell = spell; 
         }

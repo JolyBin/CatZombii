@@ -28,7 +28,7 @@ namespace Core.Steps
             _tableController = new TableController(currentBook, _flaskController, uIService);
             _uiService = uIService;
             _homeController = homeController;
-            _battleController = new(uIService, currentlevel, currentBook);
+            _battleController = new(uIService, currentlevel, currentBook, _tableController);
         }
 
         public void Init()

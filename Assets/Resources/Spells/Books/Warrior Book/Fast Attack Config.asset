@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a4ad61761bbd434bb43f24ea36c7584, type: 3}
-  m_Name: Fast Attack Combination
+  m_Script: {fileID: 11500000, guid: 64f96abcdf4e8344290feb168f1d834d, type: 3}
+  m_Name: Fast Attack Config
   m_EditorClassIdentifier: 
-  <Spell>k__BackingField: {fileID: 11400000, guid: 2dd97c0c15a7ee6448750d8b1f675c0e, type: 2}
-  _elements:
-  - {fileID: 11400000, guid: 98057fa97ee93e342a415183e5a39e9a, type: 2}
+  <Name>k__BackingField: "\u0423\u0434\u0430\u0440 \u043C\u0435\u0447\u043E\u043C"
+  <Damage>k__BackingField: 10
+  <StunTimer>k__BackingField: 2
