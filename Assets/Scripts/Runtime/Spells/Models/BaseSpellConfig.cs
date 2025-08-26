@@ -11,6 +11,6 @@ namespace Core.Spells
 
     public abstract class BaseSpell
     {
-        public virtual async void ApplySpell((Health health, TargetController targetController)[] allTargets) { }
+        public virtual async void ApplySpell((Health health, TargetController targetController)[] allTargets, (Health health, TargetController targetController)[] allFriendly) { }
     }
 }

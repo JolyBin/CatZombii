@@ -44,8 +44,13 @@ namespace Core.Battle
             OnDamaged?.Invoke();
             OnChanged?.Invoke(CurrentHP, MaxHP);
 
-            if (CurrentHP <= 0) 
-                OnDied?.Invoke();
+            if (CurrentHP <= 0)
+                Die();
+        }
+
+        public void PercentDamage(int pecent)
+        {
+            TakeDamage(CurrentHP * pecent / 100);
         }
 
         public void Heal(int amount)
@@ -58,6 +63,15 @@ namespace Core.Battle
             CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
             OnHealed?.Invoke();
             OnChanged?.Invoke(CurrentHP, MaxHP);
+        }
+
+        private void Die()
+        {
+            OnDied?.Invoke();
+            OnDamaged = null;
+            OnHealed = null;
+            OnDied = null;
+            OnChanged = null;
         }
     }
 }

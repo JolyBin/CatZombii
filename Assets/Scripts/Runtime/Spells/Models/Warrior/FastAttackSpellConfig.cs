@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Core.Spells
 {
-    [CreateAssetMenu(fileName = "Fast Attack Config", menuName = "Spells/Create Fast Attack Config")]
+    [CreateAssetMenu(fileName = "Fast Attack Config", menuName = "Spells/Warrior/Create Fast Attack Config")]
     public class FastAttackSpellConfig : BaseSpellConfig
     {
         [field: SerializeField] public int Damage { get; private set; }
@@ -25,7 +25,7 @@ namespace Core.Spells
             _damage = damage;
             _stunTimer = stunTimer;
         }
-        public override async void ApplySpell((Health health, TargetController targetController)[] allTargets)
+        public override async void ApplySpell((Health health, TargetController targetController)[] allTargets, (Health health, TargetController targetController)[] allFriedly)
         {
             if (allTargets.Length == 0)
                 return;

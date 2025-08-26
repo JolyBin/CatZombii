@@ -65,7 +65,7 @@ namespace Core.Battle
                 enemy.targetController.AddTarget(heroHealth);
                 enemy.targetController.StartAttack();
             }
-            _tableController.OnSuccessfulMerge += (BaseSpell spell) => spell.ApplySpell(_enemyList.ToArray());
+            _tableController.OnSuccessfulMerge += (BaseSpell spell) => spell.ApplySpell(_enemyList.ToArray(), _friendlyList.ToArray());
         }
 
         public void Exit()

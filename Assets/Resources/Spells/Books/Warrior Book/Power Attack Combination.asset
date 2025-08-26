@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a4ad61761bbd434bb43f24ea36c7584, type: 3}
   m_Name: Power Attack Combination
   m_EditorClassIdentifier: 
-  <Spell>k__BackingField: {fileID: 11400000, guid: ebe8bc2b085a095449806144f53c62ec, type: 2}
+  <Spell>k__BackingField: {fileID: 11400000, guid: a0e186eb4fdd5924da8ef32ad6525a8e, type: 2}
   _elements:
-  - {fileID: 11400000, guid: 98057fa97ee93e342a415183e5a39e9a, type: 2}
   - {fileID: 11400000, guid: 98057fa97ee93e342a415183e5a39e9a, type: 2}

@@ -10,10 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8a4ad61761bbd434bb43f24ea36c7584, type: 3}
-  m_Name: Power Fire Attack Combination
+  m_Name: Power AOE Attack Combination
   m_EditorClassIdentifier: 
-  <Spell>k__BackingField: {fileID: 11400000, guid: fdaf929061ef1f74cac6bc0dbcf53114, type: 2}
+  <Spell>k__BackingField: {fileID: 11400000, guid: cf780ceddb2367b46a8137d7419107e2, type: 2}
   _elements:
-  - {fileID: 11400000, guid: 98057fa97ee93e342a415183e5a39e9a, type: 2}
   - {fileID: 11400000, guid: 98057fa97ee93e342a415183e5a39e9a, type: 2}
   - {fileID: 11400000, guid: f218f900823979f418512da3d93cfc2f, type: 2}
