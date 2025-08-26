@@ -36,7 +36,7 @@ namespace Core.Battle
             _timerStep = 100;
         }
 
-        public void Die()
+        public void Dispose()
         {
             _isLive = false;
             _targetsList = new();

@@ -1,5 +1,6 @@
 using Core.Spells;
 using Core.Steps.UI;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Services.UI;
@@ -8,6 +9,8 @@ namespace Core.Battle
 {
     public class BattleController
     {
+        public event Action OnHeroDie;
+        public event Action OnAllEnemyDie;
         public (Health health, TargetController targetController)[] FriendlySquad => _friendlyList.ToArray();
         public (Health health, TargetController targetController)[] EnemySquad => _enemyList.ToArray();
 
@@ -52,6 +55,16 @@ namespace Core.Battle
                 newHealth.OnChanged += uiUnitHealthBar.SetHealth;
                 targetController.OnTimerChanged += uiUnitTimerbar.SetTimer;
                 targetController.OnAttack += attack.Attack;
+
+                newHealth.OnDied += () =>
+                {
+                    _enemyList.Remove((newHealth, targetController));
+                    targetController.Dispose();
+                    newHealth.Dispose();
+                    if (_enemyList.Count == 0)
+                        OnAllEnemyDie?.Invoke();
+                };
+
             }
 
             Health heroHealth = new Health(_playerConfig.HP, 0);
@@ -59,8 +72,16 @@ namespace Core.Battle
             _battleWindow.SetHero(_playerConfig);
             _battleWindow.SetHealth(heroHealth.CurrentHP, heroHealth.MaxHP);
             heroHealth.OnChanged += _battleWindow.SetHealth;
+            heroHealth.OnDied += () =>
+            {
+                OnHeroDie?.Invoke();
+                foreach (var item in _enemyList)
+                {
+                    item.targetController.StopAttack();
+                }
+            };
 
-            foreach(var enemy in _enemyList)
+            foreach (var enemy in _enemyList)
             {
                 enemy.targetController.AddTarget(heroHealth);
                 enemy.targetController.StartAttack();
@@ -70,7 +91,15 @@ namespace Core.Battle
 
         public void Exit()
         {
-
+            foreach (var enemy in _enemyList)
+            {
+                enemy.targetController.Dispose();
+                enemy.health.Dispose();
+            }
+            OnAllEnemyDie = null;
+            OnHeroDie = null;
+            _enemyList = new();
+            _friendlyList = new();
         }
     }
 }

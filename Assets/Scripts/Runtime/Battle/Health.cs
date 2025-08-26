@@ -65,13 +65,18 @@ namespace Core.Battle
             OnChanged?.Invoke(CurrentHP, MaxHP);
         }
 
-        private void Die()
+        public void Dispose()
         {
-            OnDied?.Invoke();
             OnDamaged = null;
             OnHealed = null;
             OnDied = null;
             OnChanged = null;
+        }
+
+        private void Die()
+        {
+            OnDied?.Invoke();
+            Dispose();
         }
     }
 }

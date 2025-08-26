@@ -16,6 +16,8 @@ namespace Core.Steps
         private readonly TableController _tableController;
 
         private UIBattleWindow _window;
+        private UIWinWindow _winWindow;
+        private UILoseWindow _loseWindow;
         private HomeController _homeController;
         private BattleController _battleController;
         private Book _currentBook;
@@ -38,6 +40,8 @@ namespace Core.Steps
             _flaskController.Init();
             _window.OnClickHomeButton += Exit;
             _flaskController.SubscribeToMove();
+            _battleController.OnAllEnemyDie += ShowWinWindow;
+            _battleController.OnHeroDie += ShowLoseWindow;
             _battleController.Init();
         }
 
@@ -48,7 +52,26 @@ namespace Core.Steps
             _tableController.Exit();
             _battleController.Exit();
             _homeController.OpenWindow();
+        }
 
+        private void ShowWinWindow()
+        {
+            _winWindow = _uiService.Show<UIWinWindow>();
+            _winWindow.OnClickContinueButton += () =>
+            {
+                _winWindow.Hide();
+                Exit();
+            };
+        }
+
+        private void ShowLoseWindow()
+        {
+            _loseWindow = _uiService.Show<UILoseWindow>();
+            _loseWindow.OnClickContinueButton += () =>
+            {
+                _loseWindow.Hide();
+                Exit();
+            };
         }
     }
 }
