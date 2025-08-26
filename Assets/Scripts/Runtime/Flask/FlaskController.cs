@@ -118,12 +118,15 @@ namespace Core.Flask
         {
             if(flask.IsPossiblePushElement)
             {
+                
                 Element element = _selectedFlask.PopElement();
+                _uiFlasks[_selectedFlask].DeselectElement();
                 _uiFlasks[_selectedFlask].RemoveElement();
                 _uiFlasks[flask].AddElement(element);
                 flask.PushElement(element);
                 _selectedFlask = null;
                 MoveCommand?.Invoke();
+                
             }
             else
             {

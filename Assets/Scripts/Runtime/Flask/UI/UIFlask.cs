@@ -14,11 +14,13 @@ namespace Core.Flask.UI
         [field: SerializeField] public RectTransform RectTransform { get; private set; }
 
         [SerializeField] private RectTransform _ballContainer;
+        [SerializeField] private RectTransform _selectedPosition;
         [SerializeField] private UIBall _bullPrefab;
         [SerializeField] private Button _button;
-        [SerializeField] private RectTransform _selectedElementPosition;
-        [SerializeField] private RectTransform _startPosition;
         [SerializeField] private Image[] _waterImages;
+
+
+        private Vector3 _basePosition;
 
         private int _currentIndex = 0;
 
@@ -29,6 +31,7 @@ namespace Core.Flask.UI
                 item.fillAmount = 0;
             }
             _button.onClick.AddListener(() => ButtonClickCommand?.Invoke());
+            _basePosition = transform.position;
         }
 
         public void SetElements(Element[] startElements)
@@ -49,12 +52,12 @@ namespace Core.Flask.UI
 
         public void SelectElement()
         {
-
-            //_currentTween = selectedBall.transform.DOMove(_selectedElementPosition.position, _animDuration);
+            RectTransform.position = _selectedPosition.position;
         }
 
         public void DeselectElement()
         {
+            RectTransform.position = _basePosition;
         }
 
         public void RemoveElement()
