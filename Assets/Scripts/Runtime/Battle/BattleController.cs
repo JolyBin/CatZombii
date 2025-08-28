@@ -7,16 +7,59 @@ using Utility.Services.UI;
 
 namespace Core.Battle
 {
+    public class UnitRuntime
+    {
+        public Health Health { get; private set; }
+        public TargetController TargetController { get; private set; }
+
+        public UIUnit UIUnit { get; private set; }
+
+        public UnitRuntime(UnitConfig unit)
+        {
+            Health = new Health(unit.HP, unit.TargetPriority);
+            TargetController = new TargetController(unit.AttackCooldown);
+            UIUnit = GameObject.Instantiate<UIUnit>(unit.UnitPrefab);
+
+            Health.OnChanged += UIUnit.SetHealth;
+            UIUnit.SetHealth(Health.CurrentHP, Health.MaxHP);
+            UIUnit.SetName(unit.Name);
+            if (unit.AttackCooldown > 0)
+            {
+
+                BaseAttack attack = unit.AttackConfig.GetAttackClass();
+                UIUnit.SetActiveTimer(true);
+                UIUnit.SetTimer(0, unit.AttackCooldown);
+
+                TargetController.OnTimerChanged += UIUnit.SetTimer;
+                TargetController.OnAttack += attack.Attack;
+            }
+            else
+            {
+                UIUnit.SetActiveTimer(false);
+            }
+
+        }
+
+        public void Dispose()
+        {
+            Health.Dispose();
+            TargetController.Dispose(); 
+            GameObject.Destroy(UIUnit.gameObject);
+        }
+    }
+
     public class BattleController
     {
         public event Action OnHeroDie;
         public event Action OnAllEnemyDie;
-        public (Health health, TargetController targetController)[] FriendlySquad => _friendlyList.ToArray();
-        public (Health health, TargetController targetController)[] EnemySquad => _enemyList.ToArray();
+
+        public Health HeroHealth { get; private set; }
+        public UnitRuntime[] FriendlySquad => _friendlyList.ToArray();
+        public UnitRuntime[] EnemySquad => _enemyList.ToArray();
 
         private IUIService _uIService;
-        private List<(Health health, TargetController targetController)> _friendlyList;
-        private List<(Health health, TargetController targetController)> _enemyList;
+        private List<UnitRuntime> _friendlyList;
+        private List<UnitRuntime> _enemyList;
         private UIBattleWindow _battleWindow;
 
         private BattleConfig _currentLevel;
@@ -38,63 +81,87 @@ namespace Core.Battle
 
         public void Init()
         {
-            foreach (UnitConfig unit in _currentLevel.UnitConfigs)
-            {
-                UIUnitHealthBar uiUnitHealthBar = GameObject.Instantiate<UIUnitHealthBar>(unit.UnitPrefab);
-                UIUnitTimerbar uiUnitTimerbar = uiUnitHealthBar.GetComponent<UIUnitTimerbar>();
-                Health newHealth = new Health(unit.HP, unit.TargetPriority);
-                TargetController targetController = new TargetController(unit.AttackCooldown);
-                BaseAttack attack = unit.AttackConfig.GetAttackClass();
-                _enemyList.Add((newHealth, targetController));
-
-                uiUnitHealthBar.SetHealth(newHealth.CurrentHP, newHealth.MaxHP);
-                uiUnitHealthBar.SetName(unit.Name);
-                uiUnitTimerbar.SetTimer(0, unit.AttackCooldown);
-                _battleWindow.SetEnemyPosition(uiUnitHealthBar.transform as RectTransform);
-
-                newHealth.OnChanged += uiUnitHealthBar.SetHealth;
-                targetController.OnTimerChanged += uiUnitTimerbar.SetTimer;
-                targetController.OnAttack += attack.Attack;
-
-                newHealth.OnDied += () =>
-                {
-                    _enemyList.Remove((newHealth, targetController));
-                    targetController.Dispose();
-                    newHealth.Dispose();
-                    if (_enemyList.Count == 0)
-                        OnAllEnemyDie?.Invoke();
-                };
-
-            }
-
-            Health heroHealth = new Health(_playerConfig.HP, 0);
-            _friendlyList.Add((heroHealth, null));
+            HeroHealth = new Health(_playerConfig.HP, 0);
             _battleWindow.SetHero(_playerConfig);
-            _battleWindow.SetHealth(heroHealth.CurrentHP, heroHealth.MaxHP);
-            heroHealth.OnChanged += _battleWindow.SetHealth;
-            heroHealth.OnDied += () =>
+            _battleWindow.SetHealth(HeroHealth.CurrentHP, HeroHealth.MaxHP);
+            HeroHealth.OnChanged += _battleWindow.SetHealth;
+            HeroHealth.OnDied += () =>
             {
                 OnHeroDie?.Invoke();
                 foreach (var item in _enemyList)
                 {
-                    item.targetController.StopAttack();
+                    item.TargetController.StopAttack();
                 }
             };
 
-            foreach (var enemy in _enemyList)
+            foreach (UnitConfig unit in _currentLevel.UnitConfigs)
             {
-                enemy.targetController.AddTarget(heroHealth);
-                enemy.targetController.StartAttack();
+                AddEnemy(unit);
+
             }
-            _tableController.OnSuccessfulMerge += (BaseSpell spell) => spell.ApplySpell(_enemyList.ToArray(), _friendlyList.ToArray());
+
+
+            _tableController.OnSuccessfulMerge += (BaseSpell spell) => spell.ApplySpell(this);
+        }
+
+        public void AddEnemy(UnitConfig unit)
+        {
+            UnitRuntime unitRuntime = new UnitRuntime(unit);
+
+            _enemyList.Add(unitRuntime);
+            _battleWindow.SetEnemyPosition(unitRuntime.UIUnit.transform as RectTransform);
+
+            if(unit.AttackCooldown > 0)
+            {
+                unitRuntime.TargetController.AddTarget(HeroHealth);
+                foreach(var target in _friendlyList)
+                {
+                    unitRuntime.TargetController.AddTarget(target.Health);
+                }
+                unitRuntime.TargetController.StartAttack();
+            }
+
+            unitRuntime.Health.OnDied += () =>
+            {
+                _enemyList.Remove(unitRuntime);
+                unitRuntime.Dispose();
+                if (_enemyList.Count == 0)
+                    OnAllEnemyDie?.Invoke();
+            };
+        }
+
+        public void AddFriend(UnitConfig unit)
+        {
+            UnitRuntime unitRuntime = new UnitRuntime(unit);
+
+            _friendlyList.Add(unitRuntime);
+            //_battleWindow.SetEnemyPosition(unitRuntime.UIUnit.transform as RectTransform);
+
+            if (unit.AttackCooldown > 0)
+            {
+                foreach (var target in _enemyList)
+                {
+                    unitRuntime.TargetController.AddTarget(target.Health);
+                }
+                unitRuntime.TargetController.StartAttack();
+            }
+
+            unitRuntime.Health.OnDied += () =>
+            {
+                _friendlyList.Remove(unitRuntime);
+                unitRuntime.Dispose();
+            };
         }
 
         public void Exit()
         {
             foreach (var enemy in _enemyList)
             {
-                enemy.targetController.Dispose();
-                enemy.health.Dispose();
+                enemy.Dispose();
+            }
+            foreach (var friend in _friendlyList)
+            {
+                friend.Dispose();
             }
             OnAllEnemyDie = null;
             OnHeroDie = null;

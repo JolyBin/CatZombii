@@ -19,13 +19,14 @@ namespace Core.Spells
             _damage = damage;
         }
 
-        public override void ApplySpell((Health health, TargetController targetController)[] allTargets, (Health health, TargetController targetController)[] allFriendly)
+        public override async void ApplySpell(BattleController battleController)
         {
-            if (allTargets.Length == 0)
+            UnitRuntime[] enemyList = battleController.EnemySquad;
+            if (enemyList.Length == 0)
                 return;
-            foreach (var target in allTargets)
+            foreach (var target in enemyList)
             {
-                target.health.TakeDamage(_damage);
+                target.Health.TakeDamage(_damage);
             }
             
         }

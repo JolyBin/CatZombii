@@ -933,7 +933,6 @@ GameObject:
   - component: {fileID: 5018210021695854397}
   - component: {fileID: 204346747095882825}
   - component: {fileID: 4679412614479359654}
-  - component: {fileID: 6781500896731836156}
   m_Layer: 5
   m_Name: UI Monster
   m_TagString: Untagged
@@ -984,18 +983,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _nameText: {fileID: 3774890051388007607}
   _fillHealthImage: {fileID: 3478002937118069674}
---- !u!114 &6781500896731836156
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8130304678888677475}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 295fab9536b182e4394b34cb5a8acf3c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  _timer: {fileID: 4293866474425705240}
   _timerText: {fileID: 4859709034787292630}
   _fillTimerImage: {fileID: 6210449861305278290}
 --- !u!1 &8454810433257624307

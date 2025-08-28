@@ -19,12 +19,13 @@ namespace Core.Spells
             _damage = damage;
         }
 
-        public override void ApplySpell((Health health, TargetController targetController)[] allTargets, (Health health, TargetController targetController)[] allFriendly)
+        public override async void ApplySpell(BattleController battleController)
         {
-            if (allTargets.Length == 0)
+            UnitRuntime[] enemyList = battleController.EnemySquad;
+            if (enemyList.Length == 0)
                 return;
-            (Health health, TargetController targetController) primaryTarget = allTargets.OrderBy(x => x.health.AttackPriority).FirstOrDefault();
-            primaryTarget.health.TakeDamage(_damage);
+            UnitRuntime primaryTarget = enemyList.OrderBy(x => x.Health.AttackPriority).FirstOrDefault();
+            primaryTarget.Health.TakeDamage(_damage);
         }
     }
 }

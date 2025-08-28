@@ -25,15 +25,16 @@ namespace Core.Spells
             _damage = damage;
             _stunTimer = stunTimer;
         }
-        public override async void ApplySpell((Health health, TargetController targetController)[] allTargets, (Health health, TargetController targetController)[] allFriedly)
+        public override async void ApplySpell(BattleController battleController)
         {
-            if (allTargets.Length == 0)
+            UnitRuntime[] enemyList = battleController.EnemySquad;
+            if (enemyList.Length == 0)
                 return;
-            (Health health, TargetController targetController) primaryTarget = allTargets.OrderBy(x => x.health.AttackPriority).FirstOrDefault();
-            primaryTarget.health.TakeDamage(_damage);
-            primaryTarget.targetController.StopAttack();
+            UnitRuntime primaryTarget = enemyList.OrderBy(x => x.Health.AttackPriority).FirstOrDefault();
+            primaryTarget.Health.TakeDamage(_damage);
+            primaryTarget.TargetController.StopAttack();
             await UniTask.Delay(_stunTimer * 1000);
-            primaryTarget.targetController.ContinueAttack();
+            primaryTarget.TargetController.ContinueAttack();
         }
     }
 }

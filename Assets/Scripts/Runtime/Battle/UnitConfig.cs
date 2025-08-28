@@ -12,7 +12,7 @@ namespace Core.Battle
         [field: SerializeField] public int TargetPriority { get; private set; } = 0;
 
         [field: SerializeField] public BaseAttackConfig AttackConfig { get; private set; }
-        [field: SerializeField] public UIUnitHealthBar UnitPrefab { get; private set; }
+        [field: SerializeField] public UIUnit UnitPrefab { get; private set; }
     }
 
 }
