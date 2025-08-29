@@ -73,7 +73,7 @@ namespace Core.Battle
             OnChanged = null;
         }
 
-        private void Die()
+        public void Die()
         {
             OnDied?.Invoke();
             Dispose();

@@ -6,6 +6,8 @@ namespace Core.Battle
     [Serializable]
     public class UnitConfig
     {
+        [field: SerializeField] public int ID {  get; private set; }
+        [field: SerializeField] public bool CanRepit { get; private set; } = true;
         [field: SerializeField] public string Name { get; private set; }
         [field: SerializeField] public int HP { get; private set; } = 1;
         [field: SerializeField] public int AttackCooldown { get; private set; }

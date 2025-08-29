@@ -17,5 +17,10 @@ MonoBehaviour:
   <HP>k__BackingField: 200
   <IconClass>k__BackingField: {fileID: 21300000, guid: 2055fd42ce4d8486295b232b0f3db096, type: 3}
   <HeroIcon>k__BackingField: {fileID: 21300000, guid: 8343e3044380bc741bd4e202dafee4ad, type: 3}
-  _combinations: []
-  _uniqElements: []
+  _combinations:
+  - {fileID: 11400000, guid: 4ef8eefd6565841478934495a6a0f108, type: 2}
+  - {fileID: 11400000, guid: 2429ec0c95224c24da7327712ea7cf3f, type: 2}
+  - {fileID: 11400000, guid: 2bdcef639d88c7342b2b07550657264c, type: 2}
+  _uniqElements:
+  - {fileID: 11400000, guid: 435a060fcb5e6a549a1497844a03d1b0, type: 2}
+  - {fileID: 11400000, guid: bf6f2198b190f5645b66b8dba734f1a2, type: 2}

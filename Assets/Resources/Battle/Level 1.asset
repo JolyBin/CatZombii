@@ -14,7 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Background>k__BackingField: {fileID: 21300000, guid: 89ee8c9ef8e2a470582f0df5e8f7f97a, type: 3}
   <UnitConfigs>k__BackingField:
-  - <Name>k__BackingField: Skeleton
+  - <ID>k__BackingField: 0
+    <CanRepit>k__BackingField: 1
+    <Name>k__BackingField: Skeleton
+    <HP>k__BackingField: 100
+    <AttackCooldown>k__BackingField: 3
+    <TargetPriority>k__BackingField: 1
+    <AttackConfig>k__BackingField: {fileID: 11400000, guid: df481efd51992c347a35f0f3404ab560, type: 2}
+    <UnitPrefab>k__BackingField: {fileID: 4679412614479359654, guid: 187bc4a3a96ccc64dacdf680c9e0f6b1, type: 3}
+  - <ID>k__BackingField: 0
+    <CanRepit>k__BackingField: 1
+    <Name>k__BackingField: Skeleton
     <HP>k__BackingField: 100
     <AttackCooldown>k__BackingField: 3
     <TargetPriority>k__BackingField: 0

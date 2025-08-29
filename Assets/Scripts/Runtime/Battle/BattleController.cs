@@ -7,51 +7,12 @@ using Utility.Services.UI;
 
 namespace Core.Battle
 {
-    public class UnitRuntime
-    {
-        public Health Health { get; private set; }
-        public TargetController TargetController { get; private set; }
-
-        public UIUnit UIUnit { get; private set; }
-
-        public UnitRuntime(UnitConfig unit)
-        {
-            Health = new Health(unit.HP, unit.TargetPriority);
-            TargetController = new TargetController(unit.AttackCooldown);
-            UIUnit = GameObject.Instantiate<UIUnit>(unit.UnitPrefab);
-
-            Health.OnChanged += UIUnit.SetHealth;
-            UIUnit.SetHealth(Health.CurrentHP, Health.MaxHP);
-            UIUnit.SetName(unit.Name);
-            if (unit.AttackCooldown > 0)
-            {
-
-                BaseAttack attack = unit.AttackConfig.GetAttackClass();
-                UIUnit.SetActiveTimer(true);
-                UIUnit.SetTimer(0, unit.AttackCooldown);
-
-                TargetController.OnTimerChanged += UIUnit.SetTimer;
-                TargetController.OnAttack += attack.Attack;
-            }
-            else
-            {
-                UIUnit.SetActiveTimer(false);
-            }
-
-        }
-
-        public void Dispose()
-        {
-            Health.Dispose();
-            TargetController.Dispose(); 
-            GameObject.Destroy(UIUnit.gameObject);
-        }
-    }
-
     public class BattleController
     {
         public event Action OnHeroDie;
         public event Action OnAllEnemyDie;
+        public event Action<Health> OnAddEnemy;
+        public event Action<Health> OnAddFriend;
 
         public Health HeroHealth { get; private set; }
         public UnitRuntime[] FriendlySquad => _friendlyList.ToArray();
@@ -106,10 +67,20 @@ namespace Core.Battle
 
         public void AddEnemy(UnitConfig unit)
         {
+            if(_enemyList.Count > 3)
+            {
+                Debug.LogError("×ÎÒÀ ÍÅ ÒÎ, ÌÍÎÃÎ ÏÐÎÒÈÂÍÈÊÎÂ");
+                return;
+            }
             UnitRuntime unitRuntime = new UnitRuntime(unit);
-
+            UnitRuntime repit = _enemyList.Find(x => x.ID == unitRuntime.ID);
+            if (repit != null && !unit.CanRepit)
+            {
+                _enemyList.Remove(repit);
+                repit.Health.Die();
+            }
             _enemyList.Add(unitRuntime);
-            _battleWindow.SetEnemyPosition(unitRuntime.UIUnit.transform as RectTransform);
+            OnAddEnemy?.Invoke(unitRuntime.Health);
 
             if(unit.AttackCooldown > 0)
             {
@@ -118,13 +89,20 @@ namespace Core.Battle
                 {
                     unitRuntime.TargetController.AddTarget(target.Health);
                 }
+
+                OnAddFriend += unitRuntime.TargetController.AddTarget;
                 unitRuntime.TargetController.StartAttack();
             }
 
+            UIUnitPosition unitPosition = _battleWindow.SetEnemyPosition();
+            unitPosition.SetUnit(unitRuntime.UIUnit.transform as RectTransform);
+
             unitRuntime.Health.OnDied += () =>
             {
+                OnAddFriend -= unitRuntime.TargetController.AddTarget;
                 _enemyList.Remove(unitRuntime);
                 unitRuntime.Dispose();
+                unitPosition.SetFree();
                 if (_enemyList.Count == 0)
                     OnAllEnemyDie?.Invoke();
             };
@@ -133,9 +111,14 @@ namespace Core.Battle
         public void AddFriend(UnitConfig unit)
         {
             UnitRuntime unitRuntime = new UnitRuntime(unit);
-
+            UnitRuntime repit = _friendlyList.Find(x => x.ID == unitRuntime.ID);
+            if (repit != null && !unit.CanRepit)
+            {
+                _friendlyList.Remove(repit);
+                repit.Dispose();
+            }
             _friendlyList.Add(unitRuntime);
-            //_battleWindow.SetEnemyPosition(unitRuntime.UIUnit.transform as RectTransform);
+            OnAddFriend?.Invoke(unitRuntime.Health);
 
             if (unit.AttackCooldown > 0)
             {
@@ -143,11 +126,17 @@ namespace Core.Battle
                 {
                     unitRuntime.TargetController.AddTarget(target.Health);
                 }
+                OnAddEnemy += unitRuntime.TargetController.AddTarget;
                 unitRuntime.TargetController.StartAttack();
             }
 
+            UIUnitPosition unitPosition = _battleWindow.SetFriendPosition();
+            unitPosition.SetUnit(unitRuntime.UIUnit.transform as RectTransform);
+
             unitRuntime.Health.OnDied += () =>
             {
+                unitPosition.SetFree();
+                OnAddEnemy -= unitRuntime.TargetController.AddTarget;
                 _friendlyList.Remove(unitRuntime);
                 unitRuntime.Dispose();
             };
@@ -165,6 +154,8 @@ namespace Core.Battle
             }
             OnAllEnemyDie = null;
             OnHeroDie = null;
+            OnAddEnemy = null;
+            OnAddFriend = null;
             _enemyList = new();
             _friendlyList = new();
         }

@@ -1,5 +1,6 @@
 using Core.Spells;
 using System;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,7 @@ using Utility.Services.UI;
 
 namespace Core.Steps.UI
 {
+
     public class UIBattleWindow : UIWindow
     {
         public event Action OnClickHomeButton;
@@ -17,8 +19,8 @@ namespace Core.Steps.UI
         [SerializeField] private Image _heroImage;
         [SerializeField] private Image _classIconImage;
         [SerializeField] private Image _healthFiil;
-        [SerializeField] private RectTransform[] _enemyPositions;
-        [SerializeField] private RectTransform[] _friendlyPositions;
+        [SerializeField] private UIUnitPosition[] _enemyPositions;
+        [SerializeField] private UIUnitPosition[] _friendlyPositions;
 
         private int _currentEnemyPositionIndex;
         private int _currentFriendlyPositionIndex;
@@ -32,8 +34,14 @@ namespace Core.Steps.UI
 
         public override void Show()
         {
-            _currentEnemyPositionIndex = 0;
-            _currentFriendlyPositionIndex = 0;
+            foreach (var unitPosition in _enemyPositions)
+            {
+                unitPosition.SetFree();
+            }
+            foreach (var unitPosition in _friendlyPositions)
+            {
+                unitPosition.SetFree();
+            }
             _homeButton.onClick.AddListener(() => OnClickHomeButton?.Invoke()); 
             base.Show();
         }
@@ -59,12 +67,7 @@ namespace Core.Steps.UI
             _healthFiil.fillAmount = (float) currentHP / maxHP;
         }
 
-        public void SetEnemyPosition(RectTransform rect)
-        {
-            rect.SetParent(_enemyPositions[_currentEnemyPositionIndex], false);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            _currentEnemyPositionIndex++;
-        }
+        public UIUnitPosition SetEnemyPosition() => _enemyPositions.First(x => x.IsFree);
+        public UIUnitPosition SetFriendPosition() => _friendlyPositions.First(x => x.IsFree);
     }
 }
