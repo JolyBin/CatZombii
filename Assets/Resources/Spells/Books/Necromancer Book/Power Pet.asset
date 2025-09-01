@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0c319ef505d34d40be31a50f7e3c0f4, type: 3}
+  m_Name: Power Pet
+  m_EditorClassIdentifier: 
+  <ID>k__BackingField: 0
+  <CanRepit>k__BackingField: 1
+  <Name>k__BackingField: 
+  <HP>k__BackingField: 40
+  <AttackCooldown>k__BackingField: 5000
+  <TargetPriority>k__BackingField: 2
+  <AttackConfig>k__BackingField: {fileID: 11400000, guid: 07e7427de64bb8f40992261812437f63, type: 2}
+  <UnitPrefab>k__BackingField: {fileID: 8770412994092654832, guid: c76f01d6816aaae439870324bb5270a6, type: 3}

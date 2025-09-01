@@ -1290,6 +1290,12 @@ MonoBehaviour:
   _uiService: {fileID: 1429129138}
   _startBook: {fileID: 11400000, guid: 6ec005f581bd91249962e1cefafc5503, type: 2}
   _currentLevels:
+  - {fileID: 11400000, guid: f7226e2f9f7dc5f4a80963b58bf61d06, type: 2}
+  - {fileID: 11400000, guid: 0170132ffde8f5f4e8d6b848443893a3, type: 2}
+  - {fileID: 11400000, guid: 46546f7837e34114f9aa56cb4314ee20, type: 2}
+  - {fileID: 11400000, guid: bcdb1bde1c535ca4198b42a1fdd712b6, type: 2}
+  - {fileID: 11400000, guid: 71f4bac6d2a0ffd4dafc25b2230444c1, type: 2}
+  - {fileID: 11400000, guid: 438182a788b5c5a439eae3719f2adc15, type: 2}
   - {fileID: 11400000, guid: b2865dd16d991c748b23f15deacd4dfd, type: 2}
 --- !u!1 &650311137
 GameObject:
