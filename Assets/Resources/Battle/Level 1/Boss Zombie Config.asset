@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0c319ef505d34d40be31a50f7e3c0f4, type: 3}
+  m_Name: Boss Zombie Config
+  m_EditorClassIdentifier: 
+  <ID>k__BackingField: 3
+  <CanRepit>k__BackingField: 1
+  <Name>k__BackingField: "\u0410\u0412\u0414\u041E\u0411"
+  <HP>k__BackingField: 450
+  <AttackCooldown>k__BackingField: 5000
+  <TargetPriority>k__BackingField: 0
+  <AttackConfig>k__BackingField: {fileID: 11400000, guid: 0c3795d2cb0bc5341a476f76690f4eb3, type: 2}
+  <UnitPrefab>k__BackingField: {fileID: 1764319918224907283, guid: 63c5d36926ce7fa49be94d695baa054c, type: 3}

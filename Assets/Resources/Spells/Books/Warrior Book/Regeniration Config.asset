@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e64c999ff557ea4b9c50715a80db9f3, type: 3}
+  m_Name: Regeniration Config
+  m_EditorClassIdentifier: 
+  <Name>k__BackingField: "\u0412\u043E\u0441\u0441\u0442\u0430\u043D\u0432\u043B\u0438\u0432\u0430\u0435\u0442
+    30 HP \u0432 \u0442\u0435\u0447\u0435\u043D\u0438\u0435 6 \u0441\u0435\u043A\u0443\u043D\u0434"
+  _healthvalue: 10
+  _timer: 2000
+  _count: 3

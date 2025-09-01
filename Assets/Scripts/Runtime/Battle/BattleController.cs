@@ -3,7 +3,9 @@ using Core.Steps.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Utility.Services.UI;
 
 namespace Core.Battle
@@ -66,19 +68,12 @@ namespace Core.Battle
 
         public void AddEnemy(UnitConfig unit)
         {
-            if(_enemyList.Count > 3)
+            if(_enemyList.Count == 4)
             {
-                Debug.LogError("×ÎÒÀ ÍÅ ÒÎ, ÌÍÎÃÎ ÏÐÎÒÈÂÍÈÊÎÂ");
-                return;
+                _enemyList[1].Health.Die();
             }
-            UnitRuntime unitRuntime = new UnitRuntime(unit);
+            UnitRuntime unitRuntime = new UnitRuntime(unit, this);
             unitRuntime.UIUnit.OnSelectClickButton += () => SelectEnemyTarget(unitRuntime);
-            UnitRuntime repit = _enemyList.Find(x => x.ID == unitRuntime.ID);
-            if (repit != null && !unit.CanRepit)
-            {
-                _enemyList.Remove(repit);
-                repit.Health.Die();
-            }
             _enemyList.Add(unitRuntime);
             OnAddEnemy?.Invoke(unitRuntime.Health);
 
@@ -124,13 +119,11 @@ namespace Core.Battle
 
         public void AddFriend(UnitConfig unit)
         {
-            UnitRuntime unitRuntime = new UnitRuntime(unit);
-            UnitRuntime repit = _friendlyList.Find(x => x.ID == unitRuntime.ID);
-            if (repit != null && !unit.CanRepit)
+            if (_friendlyList.Count == 4)
             {
-                _friendlyList.Remove(repit);
-                repit.Dispose();
+                _friendlyList[0].Health.Die();
             }
+            UnitRuntime unitRuntime = new UnitRuntime(unit, this);
             _friendlyList.Add(unitRuntime);
             OnAddFriend?.Invoke(unitRuntime.Health);
 
@@ -173,8 +166,10 @@ namespace Core.Battle
 
         private void StartWave()
         {
+            Wave currentWave = _currentLevel.Waves[_currentWaveIndex];
             _battleWindow.SetWave(_currentWaveIndex + 1, _currentLevel.Waves.Length);
-            foreach (UnitConfig unit in _currentLevel.Waves[_currentWaveIndex].UnitConfigs)
+            HeroHealth.Heal(currentWave.HealValue);
+            foreach (UnitConfig unit in currentWave.UnitConfigs)
             {
                 AddEnemy(unit);
             }

@@ -14,7 +14,7 @@ namespace Core.Battle
         [field: SerializeField] public int AttackCooldown { get; private set; }
         [field: SerializeField] public int TargetPriority { get; private set; } = 0;
 
-        [field: SerializeField] public BaseAttackConfig AttackConfig { get; private set; }
+        [field: SerializeField] public BaseUnitSpellConfig AttackConfig { get; private set; }
         [field: SerializeField] public UIUnit UnitPrefab { get; private set; }
     }
 

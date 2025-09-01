@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0c319ef505d34d40be31a50f7e3c0f4, type: 3}
   m_Name: Rat Zombie Config
   m_EditorClassIdentifier: 
-  <ID>k__BackingField: 1
+  <ID>k__BackingField: 2
   <CanRepit>k__BackingField: 1
   <Name>k__BackingField: 
   <HP>k__BackingField: 15

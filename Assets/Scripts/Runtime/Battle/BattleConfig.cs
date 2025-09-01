@@ -1,4 +1,5 @@
 using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace Core.Battle
@@ -14,6 +15,7 @@ namespace Core.Battle
     [Serializable]
     public class Wave
     {
+        [field: SerializeField] public int HealValue { get; private set; } = 40;
         [field: SerializeField] public UnitConfig[] UnitConfigs { get; private set; }
     }
 }

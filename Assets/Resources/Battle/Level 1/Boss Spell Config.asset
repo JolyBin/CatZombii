@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4d4c39365884f34493fe1240bc77f14, type: 3}
+  m_Name: Boss Spell Config
+  m_EditorClassIdentifier: 
+  _damage: 12
+  _simbpleZombieConfig: {fileID: 11400000, guid: d0f5b5631e0b76a43ae02e9df890c8eb, type: 2}
+  _ratZombieConfig: {fileID: 11400000, guid: a4d04931092af264e8de172e7c4abb1b, type: 2}
+  _spawnColldawn: 15000
+  _twoPhaseAttackCooldown: 3500
+  _threePhaseAttackCooldown: 2500

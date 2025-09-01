@@ -10,7 +10,10 @@ namespace Core.Battle
 
         public UIUnit UIUnit { get; private set; }
 
-        public UnitRuntime(UnitConfig unit)
+        private BaseUnitSpell _unitSpell;
+
+
+        public UnitRuntime(UnitConfig unit, BattleController battleController)
         {
             ID = unit.ID;
             Health = new Health(unit.HP, unit.TargetPriority);
@@ -24,12 +27,12 @@ namespace Core.Battle
             if (unit.AttackCooldown > 0)
             {
 
-                BaseAttack attack = unit.AttackConfig.GetAttackClass();
+                _unitSpell = unit.AttackConfig.GetUnitSpell();
                 UIUnit.SetActiveTimer(true);
                 UIUnit.SetTimer(0, unit.AttackCooldown);
 
                 TargetController.OnTimerChanged += UIUnit.SetTimer;
-                TargetController.OnAttack += attack.Attack;
+                _unitSpell.InitSpell(this, battleController);
             }
             else
             {
@@ -43,6 +46,7 @@ namespace Core.Battle
             Health.Dispose();
             TargetController.Dispose();
             UIUnit.ClearAction();
+            _unitSpell.DisposeSpell();
             GameObject.Destroy(UIUnit.gameObject);
         }
     }

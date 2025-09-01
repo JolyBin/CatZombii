@@ -7,14 +7,14 @@ namespace Core.Battle
 {
     public class TargetController
     {
-        public event Action<Health, Health[]> OnAttack;
+        public event Action OnAttack;
         public event Action<int, int> OnTimerChanged;
         public int CurrentTimer { get; private set; }
+        public Health CurrentTarget { get; private set; }
 
         private int _timerStep;
         private int _startTimer;
         private List<Health> _targetsList;
-        private Health _currentTarget;
 
         private bool _isLive;
 
@@ -25,6 +25,8 @@ namespace Core.Battle
             _timerStep = 100;
             _targetsList = new();
         }
+
+        public void SetNewTimerValue(int value) => _startTimer = value; 
 
         public void StopAttack()
         {
@@ -40,7 +42,7 @@ namespace Core.Battle
         {
             _isLive = false;
             _targetsList = new();
-            _currentTarget = null;
+            CurrentTarget = null;
             OnAttack = null;
             OnTimerChanged = null;
         }
@@ -80,18 +82,18 @@ namespace Core.Battle
                 }
             }
 
-            _currentTarget = primaryTarget;
+            CurrentTarget = primaryTarget;
         }
 
         private void AttackTarget()
         {
-            if(_currentTarget == null || _currentTarget.CurrentHP <= 0)
+            if(CurrentTarget == null || CurrentTarget.CurrentHP <= 0)
             {
                 SelectPrimaryTarget();
-                if(_currentTarget == null || _currentTarget.CurrentHP <= 0)
+                if(CurrentTarget == null || CurrentTarget.CurrentHP <= 0)
                     return;
             }
-            OnAttack?.Invoke(_currentTarget, _targetsList.ToArray());
+            OnAttack?.Invoke();
         }
 
         private async Task TimerAttack()
