@@ -9,9 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c62787ca31709d4c9c576fbcf61fd76, type: 3}
-  m_Name: Power Pet Config
+  m_Script: {fileID: 11500000, guid: 47955013f3c91024fad183fa8ad97f15, type: 3}
+  m_Name: Simgle Zombie Attack
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u0421\u043E\u0437\u0434\u0430\u0451\u0442 \u043A\u0440\u044B\u0441\u044E\u043A\u0430
-    \u0441\u0438\u043B\u044C\u043D\u043E"
-  _unitConfig: {fileID: 0}
+  _damage: 6

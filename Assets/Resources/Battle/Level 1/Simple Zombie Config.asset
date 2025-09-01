@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0c319ef505d34d40be31a50f7e3c0f4, type: 3}
+  m_Name: Simple Zombie Config
+  m_EditorClassIdentifier: 
+  <ID>k__BackingField: 0
+  <CanRepit>k__BackingField: 1
+  <Name>k__BackingField: 
+  <HP>k__BackingField: 30
+  <AttackCooldown>k__BackingField: 4000
+  <TargetPriority>k__BackingField: 2
+  <AttackConfig>k__BackingField: {fileID: 11400000, guid: 2c4d913b51ac6474892ea28f6bf7c902, type: 2}
+  <UnitPrefab>k__BackingField: {fileID: 4679412614479359654, guid: 187bc4a3a96ccc64dacdf680c9e0f6b1, type: 3}

@@ -22,6 +22,7 @@ namespace Core.Steps.UI
         [SerializeField] private TextMeshProUGUI _healthValueText;
         [SerializeField] private UIUnitPosition[] _enemyPositions;
         [SerializeField] private UIUnitPosition[] _friendlyPositions;
+        [SerializeField] private TextMeshProUGUI _waveText;
 
         private int _currentEnemyPositionIndex;
         private int _currentFriendlyPositionIndex;
@@ -68,6 +69,8 @@ namespace Core.Steps.UI
             _healthFiil.fillAmount = (float) currentHP / maxHP;
             _healthValueText.text = currentHP.ToString();
         }
+
+        public void SetWave(int currentWave, int maxWave) => _waveText.text = $"Wave: {currentWave}/{maxWave}";
 
         public UIUnitPosition SetEnemyPosition() => _enemyPositions.First(x => x.IsFree);
         public UIUnitPosition SetFriendPosition() => _friendlyPositions.First(x => x.IsFree);

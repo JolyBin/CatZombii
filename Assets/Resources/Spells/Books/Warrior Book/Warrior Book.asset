@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <NameHero>k__BackingField: Sokushi
   <ClassHero>k__BackingField: Warrior
-  <HP>k__BackingField: 100
+  <HP>k__BackingField: 200
   <IconClass>k__BackingField: {fileID: 21300000, guid: 8115d1c49d77641f184b719c7d26d397, type: 3}
   <HeroIcon>k__BackingField: {fileID: 21300000, guid: d96f0ff3c0c6fd74f9fc4430833b5907, type: 3}
   _combinations:

@@ -14,12 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Name>k__BackingField: "\u0421\u043E\u0437\u0434\u0430\u0451\u0442 \u043A\u0440\u044B\u0441\u044E\u043A\u0430
     \u0441\u043B\u0430\u0431\u0435\u043D\u044C\u043A\u043E\u0433\u043E"
-  _unitConfig:
-    <ID>k__BackingField: 0
-    <CanRepit>k__BackingField: 0
-    <Name>k__BackingField: "\u041A\u0440\u044B\u0441\u044E\u043A\u0430"
-    <HP>k__BackingField: 50
-    <AttackCooldown>k__BackingField: 4
-    <TargetPriority>k__BackingField: 1
-    <AttackConfig>k__BackingField: {fileID: 11400000, guid: 515eca08c80ba904ebe5da9777ffd5de, type: 2}
-    <UnitPrefab>k__BackingField: {fileID: 8770412994092654832, guid: a8e560d5785242f4395aefe11e3aa96b, type: 3}
+  _unitConfig: {fileID: 0}

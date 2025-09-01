@@ -3,8 +3,9 @@ using UnityEngine;
 
 namespace Core.Battle
 {
-    [Serializable]
-    public class UnitConfig
+
+    [CreateAssetMenu(fileName = "Unit Config", menuName = "Battle Configs/Create Unit Config")]
+    public class UnitConfig: ScriptableObject
     {
         [field: SerializeField] public int ID {  get; private set; }
         [field: SerializeField] public bool CanRepit { get; private set; } = true;

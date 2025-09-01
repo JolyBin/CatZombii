@@ -1,4 +1,6 @@
-using System;using UnityEngine;
+using System;
+using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 using Utility.Services.UI;
 
@@ -11,6 +13,7 @@ namespace Meta.UI
 
         [SerializeField] private Button _playButton;
         [SerializeField] private Button _charactersButton;
+        [SerializeField] private TextMeshProUGUI _currentLevelText;
 
 
         public override void Show()
@@ -28,5 +31,7 @@ namespace Meta.UI
             OnClickCharactersButton = null;
             base.Hide(onHide);
         }
+
+        public void SetLevelValue(int value) => _currentLevelText.text = $"Current Level: {value}";
     }
 }

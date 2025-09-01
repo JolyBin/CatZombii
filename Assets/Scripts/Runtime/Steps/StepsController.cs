@@ -30,7 +30,7 @@ namespace Core.Steps
             _tableController = new TableController(currentBook, _flaskController, uIService);
             _uiService = uIService;
             _homeController = homeController;
-            _battleController = new(uIService, currentlevel, currentBook, _tableController);
+            _battleController = new BattleController(uIService, currentlevel, currentBook, _tableController);
         }
 
         public void Init()
@@ -60,6 +60,7 @@ namespace Core.Steps
             _winWindow.OnClickContinueButton += () =>
             {
                 _winWindow.Hide();
+                _homeController.AddConfigIndex();
                 Exit();
             };
         }

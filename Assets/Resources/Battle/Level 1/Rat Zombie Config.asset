@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0c319ef505d34d40be31a50f7e3c0f4, type: 3}
+  m_Name: Rat Zombie Config
+  m_EditorClassIdentifier: 
+  <ID>k__BackingField: 1
+  <CanRepit>k__BackingField: 1
+  <Name>k__BackingField: 
+  <HP>k__BackingField: 15
+  <AttackCooldown>k__BackingField: 1500
+  <TargetPriority>k__BackingField: 1
+  <AttackConfig>k__BackingField: {fileID: 11400000, guid: 9bd877c7ed5c9c2449c4227055a64f7e, type: 2}
+  <UnitPrefab>k__BackingField: {fileID: 1546853169277313728, guid: e811e8025c40e514b9a351a810450684, type: 3}

@@ -9,14 +9,14 @@ namespace Meta
     {
         [SerializeField] private UIService _uiService;
         [SerializeField] private Book _startBook;
-        [SerializeField] private BattleConfig _currentLevel;
+        [SerializeField] private BattleConfig[] _currentLevels;
 
         private HomeController _homeController;
 
         private void Start()
         {
             _uiService.HideAll();
-            _homeController = new HomeController(_uiService, _startBook, _currentLevel);
+            _homeController = new HomeController(_uiService, _startBook, _currentLevels);
         }
     }
 }

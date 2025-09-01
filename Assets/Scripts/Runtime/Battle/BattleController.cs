@@ -29,7 +29,7 @@ namespace Core.Battle
         private BattleConfig _currentLevel;
         private Book _playerConfig;
         private TableController _tableController;
-        
+        private int _currentWaveIndex;
 
         public BattleController(IUIService uIService, BattleConfig levelConfig, Book playerConfig, TableController tableController)
         {
@@ -45,6 +45,8 @@ namespace Core.Battle
 
         public void Init()
         {
+            _currentWaveIndex = 0;
+
             HeroHealth = new Health(_playerConfig.HP, 0);
             _battleWindow.SetHero(_playerConfig);
             _battleWindow.SetHealth(HeroHealth.CurrentHP, HeroHealth.MaxHP);
@@ -58,16 +60,8 @@ namespace Core.Battle
                 }
             };
 
-            foreach (UnitConfig unit in _currentLevel.UnitConfigs)
-            {
-                AddEnemy(unit);
-            }
-
-            HeroTarget = _enemyList[_enemyList.Count - 1];
-            HeroTarget.UIUnit.Selected(true);
-
-
             _tableController.OnSuccessfulMerge += (BaseSpell spell) => spell.ApplySpell(this);
+            StartWave();
         }
 
         public void AddEnemy(UnitConfig unit)
@@ -112,9 +106,19 @@ namespace Core.Battle
                     SelectedLastTarget();
                 unitRuntime.Dispose();
                 unitPosition.SetFree();
-                
+
                 if (_enemyList.Count == 0)
-                    OnAllEnemyDie?.Invoke();
+                {
+                    _currentWaveIndex++;
+                    if(_currentLevel.Waves.Length == _currentWaveIndex)
+                    {
+                        OnAllEnemyDie?.Invoke();
+                    }
+                    else
+                    {
+                        StartWave();
+                    }
+                }
             };
         }
 
@@ -161,8 +165,21 @@ namespace Core.Battle
 
         private void SelectedLastTarget()
         {
+            if (_enemyList.Count == 0)
+                return;
             HeroTarget = _enemyList.Last();
             HeroTarget.UIUnit.Selected(true);
+        }
+
+        private void StartWave()
+        {
+            _battleWindow.SetWave(_currentWaveIndex + 1, _currentLevel.Waves.Length);
+            foreach (UnitConfig unit in _currentLevel.Waves[_currentWaveIndex].UnitConfigs)
+            {
+                AddEnemy(unit);
+            }
+
+            SelectedLastTarget();
         }
 
         public void Exit()
