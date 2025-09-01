@@ -27,10 +27,9 @@ namespace Core.Spells
         }
         public override async void ApplySpell(BattleController battleController)
         {
-            UnitRuntime[] enemyList = battleController.EnemySquad;
-            if (enemyList.Length == 0)
+            if (battleController.EnemySquad.Length == 0)
                 return;
-            UnitRuntime primaryTarget = enemyList.OrderBy(x => x.Health.AttackPriority).FirstOrDefault();
+            UnitRuntime primaryTarget = battleController.HeroTarget;
             primaryTarget.Health.TakeDamage(_damage);
             primaryTarget.TargetController.StopAttack();
             await UniTask.Delay(_stunTimer * 1000);

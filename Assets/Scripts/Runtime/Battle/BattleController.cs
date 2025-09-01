@@ -2,6 +2,7 @@ using Core.Spells;
 using Core.Steps.UI;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Utility.Services.UI;
 
@@ -17,6 +18,8 @@ namespace Core.Battle
         public Health HeroHealth { get; private set; }
         public UnitRuntime[] FriendlySquad => _friendlyList.ToArray();
         public UnitRuntime[] EnemySquad => _enemyList.ToArray();
+
+        public UnitRuntime HeroTarget { get; private set; }
 
         private IUIService _uIService;
         private List<UnitRuntime> _friendlyList;
@@ -58,8 +61,10 @@ namespace Core.Battle
             foreach (UnitConfig unit in _currentLevel.UnitConfigs)
             {
                 AddEnemy(unit);
-
             }
+
+            HeroTarget = _enemyList[_enemyList.Count - 1];
+            HeroTarget.UIUnit.Selected(true);
 
 
             _tableController.OnSuccessfulMerge += (BaseSpell spell) => spell.ApplySpell(this);
@@ -73,6 +78,7 @@ namespace Core.Battle
                 return;
             }
             UnitRuntime unitRuntime = new UnitRuntime(unit);
+            unitRuntime.UIUnit.OnSelectClickButton += () => SelectEnemyTarget(unitRuntime);
             UnitRuntime repit = _enemyList.Find(x => x.ID == unitRuntime.ID);
             if (repit != null && !unit.CanRepit)
             {
@@ -99,10 +105,14 @@ namespace Core.Battle
 
             unitRuntime.Health.OnDied += () =>
             {
+                
                 OnAddFriend -= unitRuntime.TargetController.AddTarget;
                 _enemyList.Remove(unitRuntime);
+                if (HeroTarget == unitRuntime)
+                    SelectedLastTarget();
                 unitRuntime.Dispose();
                 unitPosition.SetFree();
+                
                 if (_enemyList.Count == 0)
                     OnAllEnemyDie?.Invoke();
             };
@@ -140,6 +150,19 @@ namespace Core.Battle
                 _friendlyList.Remove(unitRuntime);
                 unitRuntime.Dispose();
             };
+        }
+
+        private void SelectEnemyTarget(UnitRuntime unitRuntime)
+        {
+            HeroTarget.UIUnit.Selected(false);
+            HeroTarget = unitRuntime;
+            HeroTarget.UIUnit.Selected(true);
+        }
+
+        private void SelectedLastTarget()
+        {
+            HeroTarget = _enemyList.Last();
+            HeroTarget.UIUnit.Selected(true);
         }
 
         public void Exit()

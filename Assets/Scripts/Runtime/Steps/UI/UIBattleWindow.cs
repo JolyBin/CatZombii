@@ -19,6 +19,7 @@ namespace Core.Steps.UI
         [SerializeField] private Image _heroImage;
         [SerializeField] private Image _classIconImage;
         [SerializeField] private Image _healthFiil;
+        [SerializeField] private TextMeshProUGUI _healthValueText;
         [SerializeField] private UIUnitPosition[] _enemyPositions;
         [SerializeField] private UIUnitPosition[] _friendlyPositions;
 
@@ -65,6 +66,7 @@ namespace Core.Steps.UI
         public void SetHealth(int currentHP, int maxHP)
         {
             _healthFiil.fillAmount = (float) currentHP / maxHP;
+            _healthValueText.text = currentHP.ToString();
         }
 
         public UIUnitPosition SetEnemyPosition() => _enemyPositions.First(x => x.IsFree);

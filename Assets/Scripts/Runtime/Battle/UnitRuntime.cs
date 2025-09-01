@@ -16,6 +16,7 @@ namespace Core.Battle
             Health = new Health(unit.HP, unit.TargetPriority);
             TargetController = new TargetController(unit.AttackCooldown);
             UIUnit = GameObject.Instantiate<UIUnit>(unit.UnitPrefab);
+            UIUnit.Init();
 
             Health.OnChanged += UIUnit.SetHealth;
             UIUnit.SetHealth(Health.CurrentHP, Health.MaxHP);
@@ -40,7 +41,8 @@ namespace Core.Battle
         public void Dispose()
         {
             Health.Dispose();
-            TargetController.Dispose(); 
+            TargetController.Dispose();
+            UIUnit.ClearAction();
             GameObject.Destroy(UIUnit.gameObject);
         }
     }
