@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93be4c810f70929418fe190490705d8b, type: 3}
   m_Name: Ult Pets Spell Config
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u041F\u0420\u0418\u0417\u042B\u0412\u0410\u0415\u0422
-    \u0412\u0421\u0415\u0425"
+  _nameKey: spell.ult_pets
+  <Icon>k__BackingField: {fileID: 0}
   _pets:
   - {fileID: 11400000, guid: 2a72f890a2606a64cbfa8cac585c093c, type: 2}
   - {fileID: 11400000, guid: ef4377e51adaccc48be614ad9d8603fd, type: 2}

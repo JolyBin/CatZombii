@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d61adbc61f928a4bb697128d3406d2e, type: 3}
   m_Name: Heal
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u041B\u0435\u0447\u0435\u043D\u0438\u0435"
+  _nameKey: spell.enchantress_heal
+  <Icon>k__BackingField: {fileID: 0}

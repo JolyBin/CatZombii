@@ -1,0 +1,156 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be9e8d26e34f5dc4dba6e54a4793f191, type: 3}
+  m_Name: Localization Table
+  m_EditorClassIdentifier: Assembly-CSharp::Utility.Services.Localization.LocalizationTable
+  _entries:
+  - Key: home.level
+    Russian: "\u0423\u0440\u043E\u0432\u0435\u043D\u044C {0}"
+    English: 
+  - Key: battle.wave
+    Russian: "\u0412\u043E\u043B\u043D\u0430: {0}/{1}"
+    English: 
+  - Key: table.brew_failed
+    Russian: "\u041D\u0435 \u0441\u0432\u0430\u0440\u0438\u043B\u043E\u0441\u044C"
+    English: 
+  - Key: home.play
+    Russian: "\u0418\u0413\u0420\u0410\u0422\u042C!"
+    English: 
+  - Key: home.heroes
+    Russian: "\u0413\u0415\u0420\u041E\u0418"
+    English: 
+  - Key: heroes.ready
+    Russian: "\u0413\u043E\u0442\u043E\u0432\u043E"
+    English: 
+  - Key: equipment.back
+    Russian: "\u041D\u0430\u0437\u0430\u0434"
+    English: 
+  - Key: equipment.stat_hp
+    Russian: "\u0425\u041F"
+    English: 
+  - Key: equipment.stat_attack
+    Russian: "\u0410\u0442\u0430\u043A\u0430"
+    English: 
+  - Key: win.title
+    Russian: "\u0423\u0420\u041E\u0412\u0415\u041D\u042C \u041F\u0420\u041E\u0419\u0414\u0415\u041D!"
+    English: 
+  - Key: win.rewards
+    Russian: "\u041D\u0410\u0413\u0420\u0410\u0414\u042B"
+    English: 
+  - Key: win.claim
+    Russian: "\u0417\u0430\u0431\u0440\u0430\u0442\u044C"
+    English: 
+  - Key: win.collect_x2
+    Russian: "\u0417\u0430\u0431\u0440\u0430\u0442\u044C \xD72"
+    English: 
+  - Key: win.ad_free
+    Russian: "\u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u041E!"
+    English: 
+  - Key: lose.title
+    Russian: "\u0422\u042B \u041F\u041E\u0413\u0418\u0411"
+    English: 
+  - Key: lose.exit
+    Russian: "\u0412\u044B\u0445\u043E\u0434"
+    English: 
+  - Key: pause.title
+    Russian: "\u041F\u0410\u0423\u0417\u0410"
+    English: 
+  - Key: pause.continue
+    Russian: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C"
+    English: 
+  - Key: pause.restart
+    Russian: "\u0417\u0430\u043D\u043E\u0432\u043E"
+    English: 
+  - Key: pause.settings
+    Russian: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438"
+    English: 
+  - Key: pause.give_up
+    Russian: "\u0421\u0434\u0430\u0442\u044C\u0441\u044F"
+    English: 
+  - Key: spell.power_attack
+    Russian: "\u0426\u0430\u0440\u0430\u043F"
+    English: 
+  - Key: spell.aoe_attack
+    Russian: "\u0411\u0440\u044B\u0437\u0433\u0438"
+    English: 
+  - Key: spell.fast_attack
+    Russian: "\u041E\u0433\u043B\u0443\u0448\u0435\u043D\u0438\u0435"
+    English: 
+  - Key: spell.regeniration
+    Russian: "\u041B\u0435\u0447\u0435\u043D\u0438\u0435"
+    English: 
+  - Key: spell.ultimate_attack
+    Russian: "\u0412\u0437\u0440\u044B\u0432"
+    English: 
+  - Key: spell.simple_pet
+    Russian: "\u0421\u043E\u0437\u0434\u0430\u0451\u0442 \u043A\u0440\u044B\u0441\u044E\u043A\u0430
+      \u0441\u043B\u0430\u0431\u0435\u043D\u044C\u043A\u043E\u0433\u043E"
+    English: 
+  - Key: spell.power_pet
+    Russian: "\u0421\u043E\u0437\u0434\u0430\u0451\u0442 \u043A\u0440\u044B\u0441\u044E\u043A\u0430
+      \u0441\u0438\u043B\u044C\u043D\u043E"
+    English: 
+  - Key: spell.ult_pets
+    Russian: "\u041F\u0420\u0418\u0417\u042B\u0412\u0410\u0415\u0422 \u0412\u0421\u0415\u0425"
+    English: 
+  - Key: spell.fire_ball
+    Russian: "\u041E\u0433\u043D\u0435\u043D\u043D\u044B\u0439 \u0448\u0430\u0440"
+    English: 
+  - Key: spell.fire_meteor
+    Russian: "\u041E\u0433\u043D\u0435\u043D\u043D\u044B\u0439 \u043C\u0435\u0442\u0435\u043E\u0440"
+    English: 
+  - Key: spell.ice_arrow
+    Russian: "\u041B\u0435\u0434\u044F\u043D\u0430\u044F \u0441\u0442\u0440\u0435\u043B\u0430"
+    English: 
+  - Key: spell.ice_meteor
+    Russian: "\u041B\u0435\u0434\u044F\u043D\u043E\u0439 \u043C\u0435\u0442\u0435\u043E\u0440"
+    English: 
+  - Key: spell.charm_attack
+    Russian: "\u0417\u0430\u0447\u0430\u0440\u043E\u0432\u0430\u043D\u044B\u0439
+      \u0443\u0434\u0430\u0440"
+    English: 
+  - Key: spell.fury_forest
+    Russian: "\u042F\u0440\u043E\u0441\u0442\u044C \u043B\u0435\u0441\u0430"
+    English: 
+  - Key: spell.enchantress_heal
+    Russian: "\u041B\u0435\u0447\u0435\u043D\u0438\u0435"
+    English: 
+  - Key: spell.slowing
+    Russian: "\u0417\u0430\u043C\u0435\u0434\u043B\u0435\u043D\u0438\u0435"
+    English: 
+  - Key: unit.boss_zombie
+    Russian: "\u0410\u0412\u0414\u041E\u0411"
+    English: 
+  - Key: hero.warrior.name
+    Russian: Sokushi
+    English: 
+  - Key: hero.warrior.class
+    Russian: "\u0412\u043E\u0438\u043D"
+    English: 
+  - Key: hero.necromancer.name
+    Russian: Qwas
+    English: 
+  - Key: hero.necromancer.class
+    Russian: "\u041D\u0435\u043A\u0440\u043E\u043C\u0430\u043D\u0442"
+    English: 
+  - Key: hero.wizard.name
+    Russian: Immortal
+    English: 
+  - Key: hero.wizard.class
+    Russian: "\u041C\u0430\u0433"
+    English: 
+  - Key: hero.enchantress.name
+    Russian: Zlaxxalz
+    English: 
+  - Key: hero.enchantress.class
+    Russian: "\u0427\u0430\u0440\u043E\u0434\u0435\u0439\u043A\u0430"
+    English: 

@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility.Services.Localization;
 using Utility.Services.UI;
 
 namespace Meta.UI
@@ -32,6 +33,7 @@ namespace Meta.UI
             base.Hide(onHide);
         }
 
-        public void SetLevelValue(int value) => _currentLevelText.text = $"Current Level: {value}";
+        public void SetLevelValue(int value)
+            => _currentLevelText.text = Localization.Get(LocKeys.HomeLevel, value);
     }
 }

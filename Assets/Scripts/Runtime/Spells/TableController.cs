@@ -4,6 +4,7 @@ using Core.Spells.UI;
 using Core.Steps;
 using System;
 using System.Collections.Generic;
+using Utility.Services.Localization;
 using Utility.Services.UI;
 
 namespace Core.Spells
@@ -146,7 +147,7 @@ namespace Core.Spells
                 // цепочку, которую набрал игрок: он не выбирает, что схлопнется, только
                 // когда проверить. «Fire > Fighting» рецептом не является, а «Fighting >
                 // Fighting» — внутренний узел дерева по дороге к ультимейту без заклинания.
-                _window.ShowResult(false, "Не сварилось");
+                _window.ShowResult(false, Localization.Get(LocKeys.TableBrewFailed));
             }
 
             // варка очищает котёл целиком — вместе со всеми сроками. Это и есть цена решения

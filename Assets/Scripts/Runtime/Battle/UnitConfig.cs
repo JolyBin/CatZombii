@@ -1,5 +1,6 @@
 ﻿using Core.Steps;
 using UnityEngine;
+using Utility.Services.Localization;
 
 namespace Core.Battle
 {
@@ -9,7 +10,22 @@ namespace Core.Battle
     {
         [field: SerializeField] public int ID {  get; private set; }
         [field: SerializeField] public bool CanRepit { get; private set; } = true;
-        [field: SerializeField] public string Name { get; private set; }
+
+        [Tooltip("КЛЮЧ строки, а не сама строка. Соглашение: unit.<имя_юнита>. " +
+                 "ПУСТО — у юнита нет подписи вовсе (так у всех рядовых зомби), " +
+                 "и это не то же самое, что пропавший ключ.")]
+        [SerializeField] private string _nameKey;
+
+        /// <summary>Ключ имени — для редакторной проверки и миграций, не для игры.</summary>
+        public string NameKey => _nameKey;
+
+        /// <summary>
+        /// Подпись юнита в бою. Пустой ключ означает «без имени» — <c>UIUnit.SetName</c>
+        /// в этом случае прячет надпись целиком, поэтому гонять пустоту через таблицу
+        /// (и получать маркер <c>#unit.#</c> на экране) нельзя.
+        /// </summary>
+        public string Name => string.IsNullOrEmpty(_nameKey) ? string.Empty : Localization.Get(_nameKey);
+
         [field: SerializeField] public int HP { get; private set; } = 1;
 
         /// <summary>

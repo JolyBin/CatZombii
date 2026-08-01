@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d61adbc61f928a4bb697128d3406d2e, type: 3}
   m_Name: Fury Forest
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u042F\u0440\u043E\u0441\u0442\u044C \u043B\u0435\u0441\u0430"
+  _nameKey: spell.fury_forest
+  <Icon>k__BackingField: {fileID: 0}

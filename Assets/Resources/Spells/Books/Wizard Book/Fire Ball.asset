@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d61adbc61f928a4bb697128d3406d2e, type: 3}
   m_Name: Fire Ball
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u041E\u0433\u043D\u0435\u043D\u043D\u044B\u0439 \u0448\u0430\u0440"
+  _nameKey: spell.fire_ball
+  <Icon>k__BackingField: {fileID: 0}

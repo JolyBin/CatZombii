@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <ID>k__BackingField: 3
   <CanRepit>k__BackingField: 1
-  <Name>k__BackingField: "\u0410\u0412\u0414\u041E\u0411"
+  _nameKey: unit.boss_zombie
   <HP>k__BackingField: 450
   <AttackCooldown>k__BackingField: 5000
+  _attackCooldownTacts: 0
   <TargetPriority>k__BackingField: 0
   <AttackConfig>k__BackingField: {fileID: 11400000, guid: 0c3795d2cb0bc5341a476f76690f4eb3, type: 2}
   <UnitPrefab>k__BackingField: {fileID: 1764319918224907283, guid: 63c5d36926ce7fa49be94d695baa054c, type: 3}

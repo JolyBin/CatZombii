@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 804b2a8b8aabc1047a1f387873033224, type: 3}
   m_Name: Power Attack Config
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u0426\u0430\u0440\u0430\u043F"
+  _nameKey: spell.power_attack
   <Icon>k__BackingField: {fileID: 0}
   _damage: 15

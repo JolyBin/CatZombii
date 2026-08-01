@@ -1,9 +1,10 @@
-using Core.Spells;
+﻿using Core.Spells;
 using System;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility.Services.Localization;
 using Utility.Services.UI;
 
 namespace Core.Steps.UI
@@ -73,7 +74,13 @@ namespace Core.Steps.UI
             _healthValueText.text = currentHP.ToString();
         }
 
-        public void SetWave(int currentWave, int maxWave) => _waveText.text = $"Wave: {currentWave}/{maxWave}";
+        /// <summary>
+        /// Номер волны. Был захардкожен по-английски («Wave: 1/3») в русской игре —
+        /// ровно тот дефект, ради которого локализация и заводилась: строка,
+        /// написанная не на языке игрока, ничем не отличается от отсутствующей.
+        /// </summary>
+        public void SetWave(int currentWave, int maxWave)
+            => _waveText.text = Localization.Get(LocKeys.BattleWave, currentWave, maxWave);
 
         public UIUnitPosition SetEnemyPosition() => _enemyPositions.FirstOrDefault(x => x.IsFree);
         public UIUnitPosition SetFriendPosition() => _friendlyPositions.FirstOrDefault(x => x.IsFree);

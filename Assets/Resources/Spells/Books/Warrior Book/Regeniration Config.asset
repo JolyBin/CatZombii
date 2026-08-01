@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e64c999ff557ea4b9c50715a80db9f3, type: 3}
   m_Name: Regeniration Config
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u041B\u0435\u0447\u0435\u043D\u0438\u0435"
+  _nameKey: spell.regeniration
   <Icon>k__BackingField: {fileID: 0}
   _healthvalue: 20
   _timer: 2000

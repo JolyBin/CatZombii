@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1191c0febfbdf3748b8c999fa2863013, type: 3}
   m_Name: Necromancer Book
   m_EditorClassIdentifier: 
-  <NameHero>k__BackingField: Qwas
-  <ClassHero>k__BackingField: Necromancer
+  _nameHeroKey: hero.necromancer.name
+  _classHeroKey: hero.necromancer.class
   <HP>k__BackingField: 200
   <IconClass>k__BackingField: {fileID: 21300000, guid: 2055fd42ce4d8486295b232b0f3db096, type: 3}
   <HeroIcon>k__BackingField: {fileID: 21300000, guid: 0549647fac377a34bba5e873adb923aa, type: 3}

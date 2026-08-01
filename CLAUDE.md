@@ -69,7 +69,7 @@ Assets/
       Flask/                  пазл-механика колб: Flask, FlaskController, ElementsGenerator, Element
       Spells/                 Book, Table, TableController, Combination, Chain + конфиги заклинаний
       Battle/                 BattleController, UnitRuntime, UnitConfig, Health, TargetController
-      Utility/                Pool, IAction, UIService
+      Utility/                Pool, IAction, UIService, Localization
   Plugins/UniTask/            UniTask 2.5.10 (вендорится в репо, свои asmdef)
   Plagins/DOTween/            DOTween (папка названа с опечаткой — так в проекте)
   PluginYourGames/            PluginYG 2 (v2.0092) — SDK Яндекс.Игр
@@ -113,6 +113,22 @@ GameManager (MonoBehaviour, Start)
 **Важно:** окна ищутся только среди активных объектов, поэтому все `UIWindow` должны быть
 активны на сцене в момент `Awake`, а `GameManager.Start` уже вызывает `_uiService.HideAll()`.
 
+### Локализация
+
+`Utility.Services.Localization` — свой слой, **не привязанный к PluginYG**.
+Игровой код зовёт `Localization.Get(key)`; строки лежат в `LocalizationTable`
+(ScriptableObject в `Resources/Localization/`), русский — язык-источник и фолбэк,
+английский заведён пустым заделом под фазу 2.
+
+Откуда берётся язык — цепочка `ILanguageSource`: выбор игрока → площадка → система →
+русский. Площадка изолирована в единственном файле `PluginYGLanguageSource.cs`
+за `#if PLUGIN_YG_2 && Localization_yg` (двойной guard намеренно: дефайн `PLUGIN_YG_2`
+стоит, а модуль локализации PluginYG **не установлен**).
+
+Тексты на сцене ставит компонент `LocalizedText`. Момент установки — два:
+собственный `OnEnable` (объекты из пула) и `UIWindow.Show() → ApplyLocalization()`
+(окна гасятся `Canvas.enabled`, поэтому `OnEnable` при показе окна не срабатывает).
+
 ### Освобождение ресурсов
 
 Есть интерфейс `IAction` с `ClearAction()` — контроллеры собирают подписчиков в `List<IAction>`
@@ -126,6 +142,16 @@ GameManager (MonoBehaviour, Start)
 
 ## Соглашения по коду
 
+- ⛔ **Ни одной пользовательской строки литералом — только ключ локализации.**
+  Ни в коде, ни в ассете, ни в TMP на сцене или в префабе. Строка в коде —
+  `Localization.Get(LocKeys.Xxx)`; в сцене/префабе — компонент `LocalizedText`
+  (`Key` — из таблицы, `Code` — ставит код, `Placeholder` — заглушка чужого кита);
+  в ассете — поле-ключ (`_nameKey`, `_nameHeroKey`, `_classHeroKey`).
+  Таблица строк — `Assets/Resources/Localization/Localization Table.asset`
+  (русский заполняем, английский — задел фазы 2, пустой).
+  Проверка — `Tools → Локализация → Проверить сцену и ассеты` (Ctrl+Shift+L),
+  отчёт обязан быть без ошибок. Рецепт — [docs/05](docs/05-extending.md#добавить-строку).
+  Нарушение ничего не ломает и не видно в диффе — поэтому проверку прогоняй руками.
 - Приватные поля — `_camelCase`, `[SerializeField] private` для инспекторных ссылок.
 - Namespace'ы: `Core.Battle`, `Core.Flask`, `Core.Spells`, `Core.Steps`, `Meta`, `Utility.Services.UI`.
   У `UIService` namespace'а нет (глобальный) — так исторически.

@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9b6a8e13d066e545a2ee4e08a40ab94, type: 3}
   m_Name: Power AOE Attack Config
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u0411\u0440\u044B\u0437\u0433\u0438"
+  _nameKey: spell.aoe_attack
   <Icon>k__BackingField: {fileID: 0}
   _damage: 20

@@ -9,6 +9,10 @@ namespace Utility.Services.UI
         public override void Show()
         {
             gameObject.SetActive(true);
+            // base.Show() здесь не зовётся сознательно (окно показывается активностью,
+            // а не Canvas.enabled), поэтому строки обновляем явно — иначе ветка
+            // UISimpleWindow осталась бы единственной без локализации.
+            ApplyLocalization();
             State = WindowState.Open;
         }
 

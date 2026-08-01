@@ -2,12 +2,26 @@
 using Cysharp.Threading.Tasks;
 using System.Threading;
 using UnityEngine;
+using Utility.Services.Localization;
 
 namespace Core.Spells
 {
     public abstract class BaseSpellConfig: ScriptableObject
     {
-        [field: SerializeField] public string Name { get; private set; }
+        [Tooltip("КЛЮЧ строки, а не сама строка. Соглашение: spell.<имя_заклинания>. " +
+                 "Текст живёт в Resources/Localization/Localization Table — рецепт в docs/05.")]
+        [SerializeField] private string _nameKey;
+
+        /// <summary>Ключ имени — нужен редакторной проверке и миграциям, не игре.</summary>
+        public string NameKey => _nameKey;
+
+        /// <summary>
+        /// Короткое имя заклинания — то, что печатается игроку в
+        /// <c>UITableWindow.ShowResult</c> и в карточке комбинации.
+        /// Разрешается ПО КЛЮЧУ при каждом обращении, а не кэшируется: смена языка
+        /// не должна требовать пересоздания ассетов, а зовётся это раз в варку.
+        /// </summary>
+        public string Name => Localization.Get(_nameKey);
 
         /// <summary>
         /// Иконка для предпросмотра на кнопке варки: docs/10 §4 требует «иконка + число»,
