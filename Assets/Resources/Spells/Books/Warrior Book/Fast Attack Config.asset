@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64f96abcdf4e8344290feb168f1d834d, type: 3}
   m_Name: Fast Attack Config
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: "\u041E\u0433\u043B\u0443\u0448\u0430\u0435\u0442 \u0446\u0435\u043B\u044C
-    \u043D\u0430 2 \u0441\u0435\u043A\u0443\u043D\u0434\u044B \u0438 \u043D\u0430\u043D\u043E\u0441\u0438\u0442
-    10 \u0443\u0440\u043E\u043D\u0430"
+  <Name>k__BackingField: "\u041E\u0433\u043B\u0443\u0448\u0435\u043D\u0438\u0435"
+  <Icon>k__BackingField: {fileID: 0}
   <Damage>k__BackingField: 10
-  <StunTimer>k__BackingField: 2
+  <StunTimer>k__BackingField: 3

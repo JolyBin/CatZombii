@@ -10,6 +10,7 @@ namespace Core.Spells
     public class PowerAttackConfig : BaseSpellConfig
     {
         [SerializeField] private int _damage;
+        public override int PreviewValue => _damage;
         public override BaseSpell GetSpell() => new PowerAttack(_damage);
     }
 

@@ -1,4 +1,4 @@
-using Core.Battle;
+﻿using Core.Battle;
 using Cysharp.Threading.Tasks;
 using System.Linq;
 using System.Threading;
@@ -12,6 +12,8 @@ namespace Core.Spells
         [SerializeField] private int _healthvalue = 10;
         [SerializeField] private int _timer = 2000;
         [SerializeField] private int _count = 3;
+        // суммарное лечение: игроку важен итог, а не размер одного тика
+        public override int PreviewValue => _healthvalue * _count;
         public override BaseSpell GetSpell() => new Regeniration(_healthvalue, _timer, _count);
     }
 

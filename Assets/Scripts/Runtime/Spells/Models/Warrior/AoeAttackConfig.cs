@@ -1,4 +1,4 @@
-using Core.Battle;
+﻿using Core.Battle;
 using Cysharp.Threading.Tasks;
 using System.Linq;
 using System.Threading;
@@ -10,6 +10,8 @@ namespace Core.Spells
     public class AoeAttackConfig : BaseSpellConfig
     {
         [SerializeField] private int _damage;
+        // урон по КАЖДОМУ: показывать суммарный нельзя — он врал бы при одном враге
+        public override int PreviewValue => _damage;
         public override BaseSpell GetSpell() => new AoeAttack(_damage);
     }
 

@@ -50,6 +50,9 @@ namespace Core.Steps
             _battleController.OnAllEnemyDie += ShowWinWindow;
             _battleController.OnHeroDie += ShowLoseWindow;
             _battleController.Init(_partyCts.Token);
+            // часы котла живут ровно столько же, сколько бой: токен боя создаётся
+            // внутри BattleController.Init(), поэтому котёл поднимается строго после него
+            _tableController.Init(_battleController.BattleToken);
         }
 
         private void Exit()

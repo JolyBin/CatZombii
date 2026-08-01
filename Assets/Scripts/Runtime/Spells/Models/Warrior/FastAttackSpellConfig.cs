@@ -12,6 +12,8 @@ namespace Core.Spells
         [field: SerializeField] public int Damage { get; private set; }
         [field: SerializeField] public int StunTimer { get; private set; }
 
+        public override int PreviewValue => Damage;
+
         public override BaseSpell GetSpell() => new FastAttackSpell(Damage, StunTimer);
     }
 

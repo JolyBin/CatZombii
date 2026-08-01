@@ -11,6 +11,7 @@ namespace Core.Spells
     {
         [SerializeField] private int _damage;
         [SerializeField] private int _percentDamageOnHero;
+        public override int PreviewValue => _damage;
         public override BaseSpell GetSpell() => new UltimateAttack(_damage, _percentDamageOnHero);
     }
 
