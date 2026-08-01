@@ -1,11 +1,11 @@
 using Core.Spells;
 using Core.Steps.UI;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
+using System.Threading;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Utility.Services.UI;
 
 namespace Core.Battle
@@ -23,6 +23,11 @@ namespace Core.Battle
 
         public UnitRuntime HeroTarget { get; private set; }
 
+        /// <summary>
+        /// Токен жизни боя. Отменяется при смерти героя, победе и выходе из партии.
+        /// </summary>
+        public CancellationToken BattleToken => _battleCts == null ? CancellationToken.None : _battleCts.Token;
+
         private IUIService _uIService;
         private List<UnitRuntime> _friendlyList;
         private List<UnitRuntime> _enemyList;
@@ -32,6 +37,10 @@ namespace Core.Battle
         private Book _playerConfig;
         private TableController _tableController;
         private int _currentWaveIndex;
+
+        private CancellationTokenSource _battleCts;
+        private bool _isBattleOver;
+        private Action<BaseSpell> _applySpellAction;
 
         public BattleController(IUIService uIService, BattleConfig levelConfig, Book playerConfig, TableController tableController)
         {
@@ -45,32 +54,31 @@ namespace Core.Battle
             _enemyList = new();
         }
 
-        public void Init()
+        public void Init(CancellationToken partyToken)
         {
             _currentWaveIndex = 0;
+            _isBattleOver = false;
+            _battleCts = CancellationTokenSource.CreateLinkedTokenSource(partyToken);
 
             HeroHealth = new Health(_playerConfig.HP, 0);
             _battleWindow.SetHero(_playerConfig);
             _battleWindow.SetHealth(HeroHealth.CurrentHP, HeroHealth.MaxHP);
             HeroHealth.OnChanged += _battleWindow.SetHealth;
-            HeroHealth.OnDied += () =>
-            {
-                OnHeroDie?.Invoke();
-                foreach (var item in _enemyList)
-                {
-                    item.TargetController.StopAttack();
-                }
-            };
+            HeroHealth.OnDied += HeroDie;
 
-            _tableController.OnSuccessfulMerge += (BaseSpell spell) => spell.ApplySpell(this);
+            _applySpellAction = (BaseSpell spell) => ApplySpell(spell).Forget();
+            _tableController.OnSuccessfulMerge += _applySpellAction;
             StartWave();
         }
 
         public void AddEnemy(UnitConfig unit)
         {
-            if(_enemyList.Count == 4)
+            if (_isBattleOver)
+                return;
+
+            if (_enemyList.Count >= _battleWindow.EnemyPositionsCount)
             {
-                _enemyList[1].Health.Die();
+                _enemyList[Math.Min(1, _enemyList.Count - 1)].Health.Die();
             }
             UnitRuntime unitRuntime = new UnitRuntime(unit, this);
             unitRuntime.UIUnit.OnSelectClickButton += () => SelectEnemyTarget(unitRuntime);
@@ -86,27 +94,28 @@ namespace Core.Battle
                 }
 
                 OnAddFriend += unitRuntime.TargetController.AddTarget;
-                unitRuntime.TargetController.StartAttack();
+                unitRuntime.TargetController.StartAttack(BattleToken);
             }
 
             UIUnitPosition unitPosition = _battleWindow.SetEnemyPosition();
-            unitPosition.SetUnit(unitRuntime.UIUnit.transform as RectTransform);
+            unitPosition?.SetUnit(unitRuntime.UIUnit.transform as RectTransform);
 
             unitRuntime.Health.OnDied += () =>
             {
-                
+
                 OnAddFriend -= unitRuntime.TargetController.AddTarget;
                 _enemyList.Remove(unitRuntime);
                 if (HeroTarget == unitRuntime)
                     SelectedLastTarget();
                 unitRuntime.Dispose();
-                unitPosition.SetFree();
+                unitPosition?.SetFree();
 
-                if (_enemyList.Count == 0)
+                if (_enemyList.Count == 0 && !_isBattleOver)
                 {
                     _currentWaveIndex++;
                     if(_currentLevel.Waves.Length == _currentWaveIndex)
                     {
+                        EndBattle();
                         OnAllEnemyDie?.Invoke();
                     }
                     else
@@ -119,7 +128,10 @@ namespace Core.Battle
 
         public void AddFriend(UnitConfig unit)
         {
-            if (_friendlyList.Count == 4)
+            if (_isBattleOver)
+                return;
+
+            if (_friendlyList.Count >= _battleWindow.FriendlyPositionsCount)
             {
                 _friendlyList[0].Health.Die();
             }
@@ -134,24 +146,76 @@ namespace Core.Battle
                     unitRuntime.TargetController.AddTarget(target.Health);
                 }
                 OnAddEnemy += unitRuntime.TargetController.AddTarget;
-                unitRuntime.TargetController.StartAttack();
+                unitRuntime.TargetController.StartAttack(BattleToken);
             }
 
             UIUnitPosition unitPosition = _battleWindow.SetFriendPosition();
-            unitPosition.SetUnit(unitRuntime.UIUnit.transform as RectTransform);
+            unitPosition?.SetUnit(unitRuntime.UIUnit.transform as RectTransform);
 
             unitRuntime.Health.OnDied += () =>
             {
-                unitPosition.SetFree();
+                unitPosition?.SetFree();
                 OnAddEnemy -= unitRuntime.TargetController.AddTarget;
                 _friendlyList.Remove(unitRuntime);
                 unitRuntime.Dispose();
             };
         }
 
+        private async UniTaskVoid ApplySpell(BaseSpell spell)
+        {
+            try
+            {
+                await spell.ApplySpell(this, BattleToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // штатное завершение: бой закончился раньше заклинания
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
+        }
+
+        private void HeroDie()
+        {
+            EndBattle();
+            OnHeroDie?.Invoke();
+        }
+
+        /// <summary>
+        /// Бой закончен: останавливает обе стороны и все отложенные эффекты.
+        /// </summary>
+        private void EndBattle()
+        {
+            if (_isBattleOver)
+                return;
+            _isBattleOver = true;
+
+            foreach (var item in _enemyList)
+            {
+                item.TargetController.StopAttack();
+            }
+            foreach (var item in _friendlyList)
+            {
+                item.TargetController.StopAttack();
+            }
+
+            CancelBattleToken();
+        }
+
+        private void CancelBattleToken()
+        {
+            if (_battleCts == null)
+                return;
+            if (!_battleCts.IsCancellationRequested)
+                _battleCts.Cancel();
+        }
+
         private void SelectEnemyTarget(UnitRuntime unitRuntime)
         {
-            HeroTarget.UIUnit.Selected(false);
+            if (HeroTarget != null)
+                HeroTarget.UIUnit.Selected(false);
             HeroTarget = unitRuntime;
             HeroTarget.UIUnit.Selected(true);
         }
@@ -159,7 +223,10 @@ namespace Core.Battle
         private void SelectedLastTarget()
         {
             if (_enemyList.Count == 0)
+            {
+                HeroTarget = null;
                 return;
+            }
             HeroTarget = _enemyList.Last();
             HeroTarget.UIUnit.Selected(true);
         }
@@ -179,6 +246,22 @@ namespace Core.Battle
 
         public void Exit()
         {
+            _isBattleOver = true;
+            CancelBattleToken();
+            _battleCts?.Dispose();
+            _battleCts = null;
+
+            if (HeroHealth != null)
+            {
+                HeroHealth.OnChanged -= _battleWindow.SetHealth;
+                HeroHealth.OnDied -= HeroDie;
+            }
+            if (_applySpellAction != null)
+            {
+                _tableController.OnSuccessfulMerge -= _applySpellAction;
+                _applySpellAction = null;
+            }
+
             foreach (var enemy in _enemyList)
             {
                 enemy.Dispose();
@@ -191,6 +274,7 @@ namespace Core.Battle
             OnHeroDie = null;
             OnAddEnemy = null;
             OnAddFriend = null;
+            HeroTarget = null;
             _enemyList = new();
             _friendlyList = new();
         }

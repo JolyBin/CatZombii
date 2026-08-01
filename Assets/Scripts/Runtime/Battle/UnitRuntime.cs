@@ -46,7 +46,7 @@ namespace Core.Battle
             Health.Dispose();
             TargetController.Dispose();
             UIUnit.ClearAction();
-            _unitSpell.DisposeSpell();
+            _unitSpell?.DisposeSpell();
             GameObject.Destroy(UIUnit.gameObject);
         }
     }

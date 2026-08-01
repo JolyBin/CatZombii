@@ -1,7 +1,8 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading;
+using UnityEngine;
 
 namespace Core.Battle
 {
@@ -12,30 +13,31 @@ namespace Core.Battle
         public int CurrentTimer { get; private set; }
         public Health CurrentTarget { get; private set; }
 
-        private int _timerStep;
+        private const int TIMER_STEP = 100;
+
         private int _startTimer;
         private List<Health> _targetsList;
 
         private bool _isLive;
+        private bool _isPaused;
 
         public TargetController(int timer)
         {
             CurrentTimer = timer;
             _startTimer = timer;
-            _timerStep = 100;
             _targetsList = new();
         }
 
-        public void SetNewTimerValue(int value) => _startTimer = value; 
+        public void SetNewTimerValue(int value) => _startTimer = value;
 
         public void StopAttack()
         {
-            _timerStep = 0;
+            _isPaused = true;
         }
 
         public void ContinueAttack()
         {
-            _timerStep = 100;
+            _isPaused = false;
         }
 
         public void Dispose()
@@ -47,16 +49,17 @@ namespace Core.Battle
             OnTimerChanged = null;
         }
 
-        public void StartAttack()
+        public void StartAttack(CancellationToken token)
         {
             _isLive = true;
-            TimerAttack();
+            _isPaused = false;
+            TimerAttack(token).Forget();
         }
 
         public void AddTarget(Health target)
         {
             _targetsList.Add(target);
-            target.OnDied += () => 
+            target.OnDied += () =>
             {
                 _targetsList.Remove(target);
             };
@@ -96,18 +99,30 @@ namespace Core.Battle
             OnAttack?.Invoke();
         }
 
-        private async Task TimerAttack()
+        private async UniTaskVoid TimerAttack(CancellationToken token)
         {
-            while (_isLive)
+            try
             {
-                OnTimerChanged?.Invoke(CurrentTimer, _startTimer);
-                CurrentTimer = Math.Clamp(CurrentTimer - _timerStep, 0, _startTimer);
-                if(CurrentTimer <= 0)
+                while (_isLive && !token.IsCancellationRequested)
                 {
-                    CurrentTimer = _startTimer;
-                    AttackTarget();
+                    OnTimerChanged?.Invoke(CurrentTimer, _startTimer);
+                    if (!_isPaused)
+                    {
+                        CurrentTimer = Math.Clamp(CurrentTimer - TIMER_STEP, 0, _startTimer);
+                        if (CurrentTimer <= 0)
+                        {
+                            CurrentTimer = _startTimer;
+                            AttackTarget();
+                        }
+                    }
+                    bool isCanceled = await UniTask.Delay(TIMER_STEP, cancellationToken: token).SuppressCancellationThrow();
+                    if (isCanceled)
+                        return;
                 }
-                await UniTask.Delay(_timerStep);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
             }
         }
     }

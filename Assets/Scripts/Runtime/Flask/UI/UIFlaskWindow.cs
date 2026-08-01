@@ -21,6 +21,18 @@ namespace Core.Flask.UI
         {
             base.Show();
 
+            EnsurePool();
+        }
+
+        /// <summary>
+        /// Пул создаётся один раз на время жизни окна. Пересоздание на каждый Show()
+        /// оставляло старые UIFlask в контейнере навсегда.
+        /// </summary>
+        private void EnsurePool()
+        {
+            if (_flaskPool != null)
+                return;
+
             Func<UIFlask> initializer = new(() => Instantiate(_uiFlaskPrefab, _poolContainer));
             Func<UIFlask, bool> predicate = new((uiFlask) => !uiFlask.gameObject.activeInHierarchy);
             Action<UIFlask> returnToPoolAction = new((uiBall) =>
@@ -41,6 +53,8 @@ namespace Core.Flask.UI
 
         public UIFlask[] GetUIFlasks(int numbers)
         {
+            EnsurePool();
+
             UIFlask[] result = new UIFlask[numbers];
             for (int i = 0; i < numbers; i++)
             {

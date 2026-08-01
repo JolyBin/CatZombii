@@ -8,19 +8,15 @@ namespace Core.Flask
     {
         private readonly Element[] _elements;
         private readonly List<int> _elemntIndexes;
+        private readonly int _maxElementPool;
 
         public ElementsGenerator(Element[] elements, int maxElementPool)
         {
             _elements = elements;
-            _elemntIndexes = new List<int>();
+            _maxElementPool = Mathf.Max(1, maxElementPool);
+            _elemntIndexes = new List<int>(_maxElementPool);
 
-            int j = 0;
-            for (int i = 0; i < maxElementPool; i++)
-            {
-                _elemntIndexes.Add(j++);
-                if (j == _elements.Length)
-                    j = 0;
-            }
+            RefillIndexes();
         }
 
         public Element[] GetElements(int size, int maxSize)
@@ -42,6 +38,9 @@ namespace Core.Flask
 
         private Element GetRandomElement(Element exclusiveElement = null)
         {
+            if (_elemntIndexes.Count == 0)
+                RefillIndexes();
+
             int rndIndex = Random.Range(0, _elemntIndexes.Count);
             int elementIndex = _elemntIndexes[rndIndex];
             if(exclusiveElement == _elements[elementIndex])
@@ -50,6 +49,26 @@ namespace Core.Flask
             }
             _elemntIndexes.RemoveAt(rndIndex);
             return _elements[elementIndex];
+        }
+
+        /// <summary>
+        /// Пул выдаётся без возврата, поэтому его надо перезаполнять при опустошении —
+        /// иначе Random.Range(0, 0) и обращение к пустому списку.
+        /// </summary>
+        private void RefillIndexes()
+        {
+            _elemntIndexes.Clear();
+
+            if (_elements == null || _elements.Length == 0)
+                return;
+
+            int j = 0;
+            for (int i = 0; i < _maxElementPool; i++)
+            {
+                _elemntIndexes.Add(j++);
+                if (j == _elements.Length)
+                    j = 0;
+            }
         }
     }
 }

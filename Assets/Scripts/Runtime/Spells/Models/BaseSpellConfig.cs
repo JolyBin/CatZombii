@@ -1,4 +1,6 @@
 using Core.Battle;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 
 namespace Core.Spells
@@ -11,6 +13,10 @@ namespace Core.Spells
 
     public abstract class BaseSpell
     {
-        public virtual async void ApplySpell(BattleController battleController) { }
+        /// <summary>
+        /// Применяет заклинание. Токен живёт столько же, сколько бой:
+        /// отложенные эффекты обязаны прерываться по нему.
+        /// </summary>
+        public virtual UniTask ApplySpell(BattleController battleController, CancellationToken token) => UniTask.CompletedTask;
     }
 }

@@ -7,8 +7,17 @@ namespace Core.Flask
     public class Flask: IAction
     {
         public event Action<Element> RepitsCommand;
+
+        /// <summary>
+        /// Единственный источник истины о содержимом колбы.
+        /// Поднимается после любой мутации — на него подписывается UIFlask.
+        /// </summary>
+        public event Action<IReadOnlyList<Element>> OnChanged;
+
         public bool IsPossiblePushElement => _stack.Count < _maxSize;
         public bool IsPossiblePopElement => _stack.Count > 0;
+        public int Count => _stack.Count;
+        public int MaxSize => _maxSize;
 
         private readonly Stack<Element> _stack;
         private readonly int _maxSize;
@@ -28,11 +37,27 @@ namespace Core.Flask
             _repitNumber = repitNumber;
         }
 
-        public Element PopElement() => _stack.Pop();
+        /// <summary>
+        /// Содержимое от дна к горлышку: индекс 0 — элемент, положенный первым.
+        /// </summary>
+        public IReadOnlyList<Element> GetElements()
+        {
+            Element[] result = _stack.ToArray();
+            Array.Reverse(result);
+            return result;
+        }
+
+        public Element PopElement()
+        {
+            Element element = _stack.Pop();
+            NotifyChanged();
+            return element;
+        }
 
         public void PushElement(Element element)
         {
             _stack.Push(element);
+            NotifyChanged();
             CheckRepits();
         }
 
@@ -43,6 +68,7 @@ namespace Core.Flask
             {
                 _stack.Push(startElements[i]);
             }
+            NotifyChanged();
         }
 
         private void CheckRepits()
@@ -56,9 +82,16 @@ namespace Core.Flask
                     return;
             }
             _stack.Clear();
-            RepitsCommand.Invoke(firstElement);
+            NotifyChanged();
+            RepitsCommand?.Invoke(firstElement);
         }
 
-        public void ClearAction() => RepitsCommand = null;
+        private void NotifyChanged() => OnChanged?.Invoke(GetElements());
+
+        public void ClearAction()
+        {
+            RepitsCommand = null;
+            OnChanged = null;
+        }
     }
 }

@@ -1,7 +1,7 @@
 using Core.Battle;
 using Cysharp.Threading.Tasks;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 
 namespace Core.Spells
@@ -25,14 +25,23 @@ namespace Core.Spells
             _damage = damage;
             _stunTimer = stunTimer;
         }
-        public override async void ApplySpell(BattleController battleController)
+        public override async UniTask ApplySpell(BattleController battleController, CancellationToken token)
         {
             if (battleController.EnemySquad.Length == 0)
                 return;
             UnitRuntime primaryTarget = battleController.HeroTarget;
+            if (primaryTarget == null)
+                return;
             primaryTarget.Health.TakeDamage(_damage);
+            if (primaryTarget.Health.CurrentHP <= 0)
+                return;
             primaryTarget.TargetController.StopAttack();
-            await UniTask.Delay(_stunTimer * 1000);
+
+            bool isCanceled = await UniTask.Delay(_stunTimer * 1000, cancellationToken: token).SuppressCancellationThrow();
+            if (isCanceled)
+                return;
+            if (primaryTarget.Health.CurrentHP <= 0)
+                return;
             primaryTarget.TargetController.ContinueAttack();
         }
     }

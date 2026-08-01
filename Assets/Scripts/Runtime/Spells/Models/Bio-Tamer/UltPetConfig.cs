@@ -1,5 +1,7 @@
 using Core.Battle;
+using Cysharp.Threading.Tasks;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace Core.Spells
@@ -19,11 +21,13 @@ namespace Core.Spells
             _pets = pets;
         }
 
-        public override async void ApplySpell(BattleController battleController)
+        public override async UniTask ApplySpell(BattleController battleController, CancellationToken token)
         {
             foreach (var petConfig in _pets)
             {
-                petConfig.GetSpell().ApplySpell(battleController);
+                if (token.IsCancellationRequested)
+                    return;
+                await petConfig.GetSpell().ApplySpell(battleController, token);
             }
         }
     }

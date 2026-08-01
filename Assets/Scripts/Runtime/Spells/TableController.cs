@@ -25,8 +25,11 @@ namespace Core.Spells
             _currentElements = new ();
             _window = _uiService.Show<UITableWindow>();
 
-            flaskController.OnFlaskFull += (Element element) => 
+            flaskController.OnFlaskFull += (Element element) =>
             {
+                // стол переполнен — лишний элемент не берём, иначе модель разъедется с UI
+                if (_window.IsFull)
+                    return;
                 _currentElements.Add(element);
                 _window.ShowFullFlask(element.Texture);
             };

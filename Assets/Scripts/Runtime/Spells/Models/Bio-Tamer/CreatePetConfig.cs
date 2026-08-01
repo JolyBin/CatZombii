@@ -1,5 +1,7 @@
 using Core.Battle;
+using Cysharp.Threading.Tasks;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace Core.Spells
@@ -19,9 +21,10 @@ namespace Core.Spells
             _unitConfig = unitConfig;
         }
 
-        public override async void ApplySpell(BattleController battleController)
+        public override UniTask ApplySpell(BattleController battleController, CancellationToken token)
         {
             battleController.AddFriend(_unitConfig);
+            return UniTask.CompletedTask;
         }
     }
 }

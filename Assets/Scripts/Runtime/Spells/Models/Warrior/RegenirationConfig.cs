@@ -1,6 +1,7 @@
 using Core.Battle;
 using Cysharp.Threading.Tasks;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace Core.Spells
@@ -27,16 +28,21 @@ namespace Core.Spells
             _count = count;
         }
 
-        public override async void ApplySpell(BattleController battleController)
+        public override async UniTask ApplySpell(BattleController battleController, CancellationToken token)
         {
             if (battleController.HeroHealth.CurrentHP == 0)
                 return;
             int count = 0;
             while (count < _count)
             {
+                if (token.IsCancellationRequested || battleController.HeroHealth.CurrentHP == 0)
+                    return;
                 battleController.HeroHealth.Heal(_healthvalue);
                 count++;
-                await UniTask.Delay(_timer);
+
+                bool isCanceled = await UniTask.Delay(_timer, cancellationToken: token).SuppressCancellationThrow();
+                if (isCanceled)
+                    return;
             }
         }
     }

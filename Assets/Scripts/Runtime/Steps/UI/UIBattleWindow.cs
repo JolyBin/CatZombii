@@ -13,6 +13,9 @@ namespace Core.Steps.UI
     {
         public event Action OnClickHomeButton;
 
+        public int EnemyPositionsCount => _enemyPositions.Length;
+        public int FriendlyPositionsCount => _friendlyPositions.Length;
+
         [SerializeField] private Button _homeButton;
         [SerializeField] private TextMeshProUGUI _nameHeroText;
         [SerializeField] private Image _heroIconImage;
@@ -72,7 +75,7 @@ namespace Core.Steps.UI
 
         public void SetWave(int currentWave, int maxWave) => _waveText.text = $"Wave: {currentWave}/{maxWave}";
 
-        public UIUnitPosition SetEnemyPosition() => _enemyPositions.First(x => x.IsFree);
-        public UIUnitPosition SetFriendPosition() => _friendlyPositions.First(x => x.IsFree);
+        public UIUnitPosition SetEnemyPosition() => _enemyPositions.FirstOrDefault(x => x.IsFree);
+        public UIUnitPosition SetFriendPosition() => _friendlyPositions.FirstOrDefault(x => x.IsFree);
     }
 }

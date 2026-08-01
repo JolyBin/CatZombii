@@ -11,6 +11,11 @@ namespace Core.Spells.UI
     {
         public event Action OnClickCheckCombinationButton;
 
+        /// <summary>
+        /// Стол забит: следующий элемент показывать некуда.
+        /// </summary>
+        public bool IsFull => _curretnEmptyPositions >= _flasks.Length;
+
         private const float _animDuration = 0.5f;
 
         [SerializeField] private UIFullFlask[] _flasks;
@@ -49,6 +54,9 @@ namespace Core.Spells.UI
 
         public void ShowFullFlask(Sprite sprte)
         {
+            if (IsFull)
+                return;
+
             UIFullFlask newFlask = _flasks[_curretnEmptyPositions];
             _curretnEmptyPositions++;
 

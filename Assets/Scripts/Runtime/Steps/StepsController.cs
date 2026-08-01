@@ -4,6 +4,7 @@ using Core.Spells;
 using Core.Steps.UI;
 using Cysharp.Threading.Tasks;
 using Meta;
+using System.Threading;
 using UnityEngine;
 using Utility.Services.UI;
 
@@ -22,6 +23,11 @@ namespace Core.Steps
         private BattleController _battleController;
         private Book _currentBook;
 
+        /// <summary>
+        /// Токен жизни партии: отменяется в Exit(), гасит все отложенные эффекты боя.
+        /// </summary>
+        private CancellationTokenSource _partyCts;
+
 
         public StepsController(IUIService uIService, Book currentBook, HomeController homeController, BattleConfig currentlevel)
         {
@@ -35,6 +41,7 @@ namespace Core.Steps
 
         public void Init()
         {
+            _partyCts = new CancellationTokenSource();
             _window = _uiService.Show<UIBattleWindow>();
             _window.Init(_currentBook);
             _flaskController.Init();
@@ -42,15 +49,27 @@ namespace Core.Steps
             _flaskController.SubscribeToMove();
             _battleController.OnAllEnemyDie += ShowWinWindow;
             _battleController.OnHeroDie += ShowLoseWindow;
-            _battleController.Init();
+            _battleController.Init(_partyCts.Token);
         }
 
         private void Exit()
         {
+            if (_partyCts != null && !_partyCts.IsCancellationRequested)
+                _partyCts.Cancel();
+
+            _battleController.OnAllEnemyDie -= ShowWinWindow;
+            _battleController.OnHeroDie -= ShowLoseWindow;
+
+            _window.OnClickHomeButton -= Exit;
             _window.Hide();
             _flaskController.Exit();
             _tableController.Exit();
             _battleController.Exit();
+
+            // связанный токен боя уже освобождён внутри BattleController.Exit()
+            _partyCts?.Dispose();
+            _partyCts = null;
+
             _homeController.OpenWindow();
         }
 

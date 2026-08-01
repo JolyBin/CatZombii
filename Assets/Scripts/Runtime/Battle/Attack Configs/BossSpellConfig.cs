@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
 using UnityEngine;
 
 namespace Core.Battle
@@ -72,18 +74,28 @@ namespace Core.Battle
                 _startThreePhase = true;
                 owner.TargetController.SetNewTimerValue(_threePhaseAttackCooldown);
                 _startSpawn = true;
-                SpawnPets();
+                SpawnPets(_battleController.BattleToken).Forget();
             }
         }
 
-        private async void SpawnPets()
+        private async UniTaskVoid SpawnPets(CancellationToken token)
         {
-            while(_startSpawn)
+            try
             {
-                _battleController.AddEnemy(_ratZombieConfig);
-                _battleController.AddEnemy(_ratZombieConfig);
-                _battleController.AddEnemy(_simpleZombieConfig);
-                await UniTask.Delay(_spawnColldawn);
+                while (_startSpawn && !token.IsCancellationRequested)
+                {
+                    _battleController.AddEnemy(_ratZombieConfig);
+                    _battleController.AddEnemy(_ratZombieConfig);
+                    _battleController.AddEnemy(_simpleZombieConfig);
+
+                    bool isCanceled = await UniTask.Delay(_spawnColldawn, cancellationToken: token).SuppressCancellationThrow();
+                    if (isCanceled)
+                        return;
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
             }
         }
     }

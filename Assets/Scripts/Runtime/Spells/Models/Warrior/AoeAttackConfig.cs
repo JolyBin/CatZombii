@@ -1,5 +1,7 @@
 using Core.Battle;
+using Cysharp.Threading.Tasks;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace Core.Spells
@@ -19,16 +21,17 @@ namespace Core.Spells
             _damage = damage;
         }
 
-        public override async void ApplySpell(BattleController battleController)
+        public override UniTask ApplySpell(BattleController battleController, CancellationToken token)
         {
             UnitRuntime[] enemyList = battleController.EnemySquad;
             if (enemyList.Length == 0)
-                return;
+                return UniTask.CompletedTask;
             foreach (var target in enemyList)
             {
                 target.Health.TakeDamage(_damage);
             }
-            
+
+            return UniTask.CompletedTask;
         }
     }
 }
