@@ -47,6 +47,7 @@ namespace Core.Flask
 
             TactMeter.BeginBattle();                              // TactMeter (временный замер, Шаг 0)
             OnFlaskFull += _ => TactMeter.RegisterCollapse();     // TactMeter (временный замер, Шаг 0)
+            MoveCommand += TactMeter.RegisterMove;                // TactMeter (временный замер, Шаг 0)
         }
 
 

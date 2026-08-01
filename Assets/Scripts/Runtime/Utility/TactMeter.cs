@@ -1,18 +1,30 @@
 ﻿// =====================================================================================
 // ВРЕМЕННЫЙ ИЗМЕРИТЕЛЬНЫЙ ИНСТРУМЕНТ — Шаг 0 из docs/10-progression-design.md, §8.
 //
-// Задача: измерить РЕАЛЬНЫЙ такт схлопывания колбы у живого игрока. Из этой константы
-// выводятся длительность волн, суммарные HP, цены и вся экономика. Заодно меряется
-// длина партии целиком — для платформенного гейта «партия <= 5 минут» (docs/09).
+// Меряет две разные вещи, и их важно не перепутать:
+//
+//   1. ТАКТ СХЛОПЫВАНИЯ В СЕКУНДАХ — сколько времени по настенным часам игрок тратит
+//      на сбор четырёх одинаковых элементов. Нужен для гейтов docs/09 и для сверки
+//      с кулдаунами, которые пока записаны в миллисекундах.
+//
+//   2. ПЕРЕЛИВОВ НА ОДНО СХЛОПЫВАНИЕ — конверсионная константа для пошагового режима
+//      (§0.2, принят 01.08.2026). После перехода на пошаговость единица времени мира —
+//      это ПЕРЕЛИВ, а не схлопывание: один перелив = один такт мира. Схлопывание стоит
+//      нескольких переливов, поэтому кулдауны врагов надо переводить в такты через это
+//      число, а не через такт схлопывания в секундах. Именно эта константа и была
+//      неизвестна, из-за чего в §0.2 все враги «слились» в один такт.
+//
+// Не каждый перелив ведёт к схлопыванию, и часть переливов холостая (игрок раскладывает),
+// поэтому по переливам считается и среднее, и медиана — распределение перекошено.
 //
 // КАК УДАЛИТЬ ПОСЛЕ ЗАМЕРА (2 шага, ничего больше не затронуто):
 //   1. Удалить этот файл (и .meta).
 //   2. Убрать в Assets/Scripts/Runtime/Flask/FlaskController.cs строки, помеченные
-//      комментарием "TactMeter (временный замер, Шаг 0)" — их три плюс один using.
+//      комментарием "TactMeter (временный замер, Шаг 0)" — их четыре плюс один using.
 //
 // Это не фича: ни одного serialized-поля, ни одного объекта в сцене, ни одной
-// зависимости на инструмент со стороны игровой логики. Точка входа — существующее
-// событие FlaskController.OnFlaskFull.
+// зависимости на инструмент со стороны игровой логики. Точки входа — существующие
+// события FlaskController.OnFlaskFull (схлопывание) и FlaskController.MoveCommand (перелив).
 // =====================================================================================
 
 using System.Collections.Generic;
@@ -50,9 +62,30 @@ namespace Utility.Diagnostics
         // _intervals[0] — от старта боя до первого схлопывания, дальше — между схлопываниями.
         private static readonly List<float> _intervals = new List<float>(64);
 
+        // --- Переливы ------------------------------------------------------------------
+        // _moves — все переливы за партию, включая холостые (перекладывание без схлопывания).
+        // _movesPerCollapse[i] — сколько переливов стоило i-е схлопывание (первое включает
+        //   разбор стартовой раскладки, поэтому считается отдельно, как и интервал).
+        // _movesInSegment — переливы, накопленные после последнего схлопывания.
+        private static int _moves;
+        private static int _movesInSegment;
+        private static readonly List<int> _movesPerCollapse = new List<int>(64);
+
+        // Порядок событий в FlaskController.MoveBall(): сначала PushElement(), который
+        // синхронно поднимает OnFlaskFull (схлопывание), и только потом MoveCommand.
+        // То есть перелив, вызвавший схлопывание, приходит ПОСЛЕ него. Флаг помечает,
+        // что этот перелив уже засчитан в закрывшийся отрезок, и его не надо класть
+        // в начало следующего — иначе каждый отрезок съезжал бы на один перелив.
+        private static bool _causingMovePending;
+
         private static string _outcome;
         private static int _partyNumber;
         private static float _sessionSeconds;
+        private static int _sessionMoves;
+        // Отрезки всех партий сессии, без первых схлопываний — по ним считается итоговая
+        // константа конверсии. Первое схлопывание партии сюда не попадает: в нём сидит
+        // стартовая раскладка, которую игрок не собирал.
+        private static readonly List<int> _sessionSegments = new List<int>(256);
         private static string _levelLabel = "?";
         private static Watcher _watcher;
 
@@ -65,9 +98,15 @@ namespace Utility.Diagnostics
             _battleStartTime = 0f;
             _lastCollapseTime = 0f;
             _intervals.Clear();
+            _moves = 0;
+            _movesInSegment = 0;
+            _movesPerCollapse.Clear();
+            _causingMovePending = false;
             _outcome = null;
             _partyNumber = 0;
             _sessionSeconds = 0f;
+            _sessionMoves = 0;
+            _sessionSegments.Clear();
             _levelLabel = "?";
             _watcher = null;
         }
@@ -85,11 +124,36 @@ namespace Utility.Diagnostics
             _battleStartTime = Now;
             _lastCollapseTime = Now;
             _intervals.Clear();
+            _moves = 0;
+            _movesInSegment = 0;
+            _movesPerCollapse.Clear();
+            _causingMovePending = false;
             _outcome = null;
             _levelLabel = ReadCurrentLevelLabel();
 
             Debug.Log(TAG + $"=== ПАРТИЯ #{_partyNumber} НАЧАЛАСЬ (уровень {_levelLabel}). " +
-                            "Замер такта пошёл. Просто играй. ===");
+                            "Замер такта и переливов пошёл. Просто играй. ===");
+        }
+
+        /// <summary>
+        /// Вызывается из FlaskController по событию MoveCommand — игрок перелил шарик.
+        /// В пошаговом режиме это и есть один такт мира.
+        /// </summary>
+        public static void RegisterMove()
+        {
+            if (!_battleRunning)
+                return;
+
+            _moves++;
+
+            if (_causingMovePending)
+            {
+                // Этот перелив только что вызвал схлопывание и уже учтён в его отрезке.
+                _causingMovePending = false;
+                return;
+            }
+
+            _movesInSegment++;
         }
 
         /// <summary>Вызывается из FlaskController по событию OnFlaskFull — колба схлопнулась.</summary>
@@ -103,18 +167,26 @@ namespace Utility.Diagnostics
             _lastCollapseTime = now;
             _intervals.Add(interval);
 
+            // +1 — перелив, который прямо сейчас вызвал это схлопывание: его MoveCommand
+            // придёт следующей строкой кода, поэтому в _movesInSegment его ещё нет.
+            int segment = _movesInSegment + 1;
+            _movesPerCollapse.Add(segment);
+            _movesInSegment = 0;
+            _causingMovePending = true;
+
             float running = Mean(_intervals, 0);
             int n = _intervals.Count;
 
             if (n == 1)
             {
-                Debug.Log(TAG + $"Схлопывание #1: {F(interval)} с от старта боя " +
+                Debug.Log(TAG + $"Схлопывание #1: {F(interval)} с от старта боя, переливов {segment} " +
                                 $"| среднее {F(running)} с");
             }
             else
             {
-                Debug.Log(TAG + $"Схлопывание #{n}: +{F(interval)} с (интервал) " +
-                                $"| среднее {F(running)} с | всего с начала боя {F(now - _battleStartTime)} с");
+                Debug.Log(TAG + $"Схлопывание #{n}: +{F(interval)} с (интервал), переливов {segment} " +
+                                $"| среднее {F(running)} с и {F(MeanI(_movesPerCollapse, 0))} перелива " +
+                                $"| всего с начала боя {F(now - _battleStartTime)} с, переливов {_moves + 1}");
             }
         }
 
@@ -126,10 +198,23 @@ namespace Utility.Diagnostics
 
             _battleRunning = false;
 
+            // Страховка на случай, если партия оборвалась между схлопыванием и его переливом:
+            // перелив был, MoveCommand по нему не пришёл — он уже учтён в отрезке, добираем
+            // только общий счётчик, чтобы «секунд на перелив» не соврали.
+            if (_causingMovePending)
+            {
+                _causingMovePending = false;
+                _moves++;
+            }
+
             float party = Now - _battleStartTime;
             _sessionSeconds += party;
+            _sessionMoves += _moves;
 
             int n = _intervals.Count;
+            for (int i = 1; i < _movesPerCollapse.Count; i++)
+                _sessionSegments.Add(_movesPerCollapse[i]);
+
             string outcome = string.IsNullOrEmpty(_outcome) ? "ВЫХОД (кнопка домой / не доиграно)" : _outcome;
 
             var sb = new StringBuilder();
@@ -138,13 +223,16 @@ namespace Utility.Diagnostics
             sb.AppendLine($"Длина партии: {F(party)} с ({Clock(party)}) | гейт «партия ≤ 5 мин»: " +
                           (party <= PARTY_GATE_SECONDS ? "ПРОЙДЕН" : "ПРОВАЛЕН"));
             sb.AppendLine($"Схлопываний за партию: {n}");
+            sb.AppendLine($"Переливов за партию: {_moves}" +
+                          (_moves > 0 ? $" | секунд на один перелив: {F(party / _moves)} с" : ""));
 
             if (n == 0)
             {
-                sb.AppendLine("Ни одного схлопывания — такт не измерен.");
+                sb.AppendLine("Ни одного схлопывания — ни такт, ни конверсия не измерены.");
             }
             else
             {
+                sb.AppendLine("--- ВРЕМЯ (секунды) -----------------------------------------");
                 sb.AppendLine($"Первое схлопывание (вход в игру): {F(_intervals[0])} с");
                 sb.AppendLine($"ТАКТ, среднее по всем: {F(Mean(_intervals, 0))} с");
                 if (n > 1)
@@ -152,11 +240,28 @@ namespace Utility.Diagnostics
                 sb.AppendLine($"Медиана интервалов: {F(Median(_intervals))} с");
                 sb.AppendLine($"Мин / макс интервал: {F(Min(_intervals))} / {F(Max(_intervals))} с");
                 sb.AppendLine($"Все интервалы, с: {Join(_intervals)}");
+
+                sb.AppendLine("--- ПОШАГОВОСТЬ (переливы = такты мира, §0.2) ---------------");
+                sb.AppendLine($"Первое схлопывание (вход в игру): переливов {_movesPerCollapse[0]}");
+                sb.AppendLine($"ПЕРЕЛИВОВ НА СХЛОПЫВАНИЕ, среднее по всем: {F(MeanI(_movesPerCollapse, 0))}");
+                if (n > 1)
+                {
+                    sb.AppendLine($"ПЕРЕЛИВОВ НА СХЛОПЫВАНИЕ, без первого: {F(MeanI(_movesPerCollapse, 1))}   [ЭТО ЧИСЛО НУЖНО ДЛЯ ВЁРСТКИ ВОЛН — ТАКТ МИРА В ПЕРЕЛИВАХ]");
+                    sb.AppendLine($"МЕДИАНА переливов на схлопывание, без первого: {F(MedianI(_movesPerCollapse, 1))}   [ЭТО ЧИСЛО НУЖНО ДЛЯ ВЁРСТКИ ВОЛН — ТАКТ МИРА В ПЕРЕЛИВАХ]");
+                }
+                sb.AppendLine($"Медиана переливов по всем: {F(MedianI(_movesPerCollapse, 0))}");
+                sb.AppendLine($"Мин / макс переливов на схлопывание: {MinI(_movesPerCollapse)} / {MaxI(_movesPerCollapse)}");
+                sb.AppendLine($"Переливов между схлопываниями: {JoinI(_movesPerCollapse)}");
+                sb.AppendLine($"Переливов после последнего схлопывания (холостой хвост): {_movesInSegment}");
             }
 
-            sb.AppendLine($"Сессия суммарно: партий {_partyNumber}, {Clock(_sessionSeconds)} | " +
-                          $"гейт «сессия ≥ 8 мин»: " +
+            sb.AppendLine($"Сессия суммарно: партий {_partyNumber}, {Clock(_sessionSeconds)}, " +
+                          $"переливов {_sessionMoves} | гейт «сессия ≥ 8 мин»: " +
                           (_sessionSeconds >= SESSION_GATE_SECONDS ? "ПРОЙДЕН" : "пока нет"));
+            if (_sessionSegments.Count > 0)
+                sb.AppendLine($"Сессия, переливов на схлопывание (без первых; схлопываний: {_sessionSegments.Count}): " +
+                              $"среднее {F(MeanI(_sessionSegments, 0))}, медиана {F(MedianI(_sessionSegments, 0))}   " +
+                              "[ИТОГОВАЯ КОНВЕРСИЯ ЗА СЕССИЮ]");
             sb.Append(TAG + "=========================================");
 
             Debug.Log(sb.ToString());
@@ -320,6 +425,62 @@ namespace Utility.Diagnostics
             copy.Sort();
             int mid = copy.Count / 2;
             return copy.Count % 2 == 1 ? copy[mid] : (copy[mid - 1] + copy[mid]) * 0.5f;
+        }
+
+        // --- То же самое для переливов (счётные величины, отдельные перегрузки) ----------
+        private static string JoinI(List<int> values)
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (i > 0) sb.Append("; ");
+                sb.Append(values[i].ToString(CultureInfo.InvariantCulture));
+            }
+            return sb.ToString();
+        }
+
+        private static float MeanI(List<int> values, int skipFirst)
+        {
+            float sum = 0f;
+            int count = 0;
+            for (int i = skipFirst; i < values.Count; i++)
+            {
+                sum += values[i];
+                count++;
+            }
+            return count == 0 ? 0f : sum / count;
+        }
+
+        private static float MedianI(List<int> values, int skipFirst)
+        {
+            if (values.Count <= skipFirst)
+                return 0f;
+            var copy = new List<int>(values.Count - skipFirst);
+            for (int i = skipFirst; i < values.Count; i++)
+                copy.Add(values[i]);
+            copy.Sort();
+            int mid = copy.Count / 2;
+            return copy.Count % 2 == 1 ? copy[mid] : (copy[mid - 1] + copy[mid]) * 0.5f;
+        }
+
+        private static int MinI(List<int> values)
+        {
+            if (values.Count == 0)
+                return 0;
+            int m = int.MaxValue;
+            for (int i = 0; i < values.Count; i++)
+                if (values[i] < m) m = values[i];
+            return m;
+        }
+
+        private static int MaxI(List<int> values)
+        {
+            if (values.Count == 0)
+                return 0;
+            int m = int.MinValue;
+            for (int i = 0; i < values.Count; i++)
+                if (values[i] > m) m = values[i];
+            return m;
         }
 
         private static float Min(List<float> values)
