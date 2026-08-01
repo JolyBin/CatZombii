@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,7 +36,7 @@ namespace Core.Flask.UI
         {
             _flaskPool?.ReturnObjectsToPool();
             base.Hide(onHide);
-            //TODO предусмотреть очистку ресурсов, если нужно
+            //TODO РїСЂРµРґСѓСЃРјРѕС‚СЂРµС‚СЊ РѕС‡РёСЃС‚РєСѓ СЂРµСЃСѓСЂСЃРѕРІ, РµСЃР»Рё РЅСѓР¶РЅРѕ
         }
 
         public UIFlask[] GetUIFlasks(int numbers)

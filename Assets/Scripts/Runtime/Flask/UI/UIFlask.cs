@@ -1,4 +1,4 @@
-using Core.Flask.Models;
+ï»¿using Core.Flask.Models;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -79,7 +79,7 @@ namespace Core.Flask.UI
 
         public void Dispose()
         {
-            _button.onClick.RemoveAllListeners(); //TODO: íàäî íîðìàëüíî ïóë êàê-òî î÷èñòèòü
+            _button.onClick.RemoveAllListeners(); //TODO: Ð½Ð°Ð´Ð¾ Ð½Ð¾Ñ€Ð¼Ð°Ð»ÑŒÐ½Ð¾ Ð¿ÑƒÐ» ÐºÐ°Ðº-Ñ‚Ð¾ Ð¾Ñ‡Ð¸ÑÑ‚Ð¸Ñ‚ÑŒ
         }
 
         public void ClearAction() =>  ButtonClickCommand = null;

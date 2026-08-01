@@ -28,7 +28,7 @@ public class UIService : MonoBehaviour, IUIService
     public void InitWindows()
     {
         _windows = new List<IWindow>();
-        _windows.AddRange(FindObjectsOfType<UIWindow>());
+        _windows.AddRange(FindObjectsByType<UIWindow>(FindObjectsInactive.Exclude));
     }
 
     public void LoadWindows()

@@ -2,8 +2,6 @@ using Core.Flask.Models;
 using Core.Flask.UI;
 using System;
 using System.Collections.Generic;
-using UnityEditor.PackageManager.UI;
-using UnityEngine;
 using Utility.Services.UI;
 
 namespace Core.Flask

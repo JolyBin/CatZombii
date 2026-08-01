@@ -1,4 +1,4 @@
-using Core.Flask;
+п»їusing Core.Flask;
 using Core.Flask.Models;
 using Core.Spells.UI;
 using System;
@@ -44,7 +44,7 @@ namespace Core.Spells
             }
             else
             {
-                _window.ShowResult(false, $"Ничего не получилось((");
+                _window.ShowResult(false, $"РќРёС‡РµРіРѕ РЅРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ((");
             }
 
             _currentElements = new();
