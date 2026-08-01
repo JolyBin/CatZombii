@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,10 +24,15 @@ namespace Core.Battle
             _selectedButton.onClick.AddListener(() => OnSelectClickButton?.Invoke());
         }
 
-        public void SetTimer(int currentTime, int maxTime)
+        /// <summary>
+        /// Таймер удара в ТАКТАХ мира, а не в секундах (docs/10 §0.2). Игроку показывается
+        /// целое «ходов до удара»: дробные секунды в пошаговой игре не означают ничего —
+        /// между его действиями таймер вообще не двигается.
+        /// </summary>
+        public void SetTimer(int currentTacts, int maxTacts)
         {
-            _timerText.text = $"{(float)currentTime / 1000:0.0}";
-            _fillTimerImage.fillAmount = (float)(maxTime - currentTime) / maxTime;
+            _timerText.text = currentTacts.ToString();
+            _fillTimerImage.fillAmount = maxTacts <= 0 ? 0f : (float)(maxTacts - currentTacts) / maxTacts;
         }
 
         public void SetActiveTimer(bool value) => _timer.SetActive(value);

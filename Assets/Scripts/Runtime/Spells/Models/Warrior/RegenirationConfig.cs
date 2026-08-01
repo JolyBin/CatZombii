@@ -1,6 +1,7 @@
 ﻿using Core.Battle;
+using Core.Steps;
 using Cysharp.Threading.Tasks;
-using System.Linq;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -10,43 +11,109 @@ namespace Core.Spells
     public class RegenirationConfig : BaseSpellConfig
     {
         [SerializeField] private int _healthvalue = 10;
+
+        /// <summary>
+        /// Наследие real-time: пауза между тиками лечения в миллисекундах, как в ассете.
+        /// В игру уходит переведённой в такты единственным множителем конверсии
+        /// (<see cref="WorldClock.MILLISECONDS_PER_TACT"/>).
+        /// </summary>
         [SerializeField] private int _timer = 2000;
         [SerializeField] private int _count = 3;
+
+        /// <summary>Пауза между тиками в ТАКТАХ мира — сколько действий игрока между лечениями.</summary>
+        public int IntervalTacts => WorldClock.TactsFromMilliseconds(_timer);
+
         // суммарное лечение: игроку важен итог, а не размер одного тика
         public override int PreviewValue => _healthvalue * _count;
-        public override BaseSpell GetSpell() => new Regeniration(_healthvalue, _timer, _count);
+        public override BaseSpell GetSpell() => new Regeniration(_healthvalue, IntervalTacts, _count);
     }
 
+    /// <summary>
+    /// Регенерация — единственный ДЛЯЩИЙСЯ эффект в игре, и в пошаговом мире он обязан
+    /// длиться в ТАКТАХ. Раньше это был <c>UniTask.Delay</c>: лечение капало по настенным
+    /// часам, то есть игрок, который просто перестал ходить, лечился бесплатно и в полной
+    /// безопасности — враги-то стоят. Это сводило единственное лечение в игре к «сварил
+    /// и подожди», без единого решения.
+    ///
+    /// Теперь тики приходят из <see cref="BattleController.OnTact"/>: пауза между ними
+    /// оплачивается действиями игрока ровно так же, как всё остальное.
+    /// </summary>
     public class Regeniration : BaseSpell
     {
-        private int _healthvalue;
-        private int _timer;
-        private int _count;
+        private readonly int _healthvalue;
+        private readonly int _intervalTacts;
+        private readonly int _count;
 
-        public Regeniration(int healthvalue, int timer, int count)
+        private BattleController _battleController;
+        private CancellationToken _token;
+        private Action _onTactAction;
+        private int _healsLeft;
+        private int _tactsToNextHeal;
+
+        public Regeniration(int healthvalue, int intervalTacts, int count)
         {
             _healthvalue = healthvalue;
-            _timer = timer;
+            // ноль тактов между тиками означал бы «всё лечение мгновенно»,
+            // то есть тихое превращение регенерации в обычный хил
+            _intervalTacts = Math.Max(1, intervalTacts);
             _count = count;
         }
 
-        public override async UniTask ApplySpell(BattleController battleController, CancellationToken token)
+        /// <summary>
+        /// Синхронная: ждать больше нечего, эффект просто подписывается на такты.
+        /// Первый тик — НЕМЕДЛЕННО, в том же такте, что и варка. Игрок уже заплатил
+        /// за варку ходом соседей, и если лечение начнёт капать только со следующего
+        /// такта, то «варю лечение на трёх HP» проигрывается по построению.
+        /// </summary>
+        public override UniTask ApplySpell(BattleController battleController, CancellationToken token)
         {
-            if (battleController.HeroHealth.CurrentHP == 0)
-                return;
-            int count = 0;
-            while (count < _count)
-            {
-                if (token.IsCancellationRequested || battleController.HeroHealth.CurrentHP == 0)
-                    return;
-                battleController.HeroHealth.Heal(_healthvalue);
-                count++;
+            if (_count <= 0 || battleController.HeroHealth.CurrentHP <= 0)
+                return UniTask.CompletedTask;
 
-                bool isCanceled = await UniTask.Delay(_timer, cancellationToken: token).SuppressCancellationThrow();
-                if (isCanceled)
-                    return;
+            _battleController = battleController;
+            _token = token;
+            _healsLeft = _count;
+
+            Heal();
+            if (_healsLeft <= 0)
+                return UniTask.CompletedTask;
+
+            _tactsToNextHeal = _intervalTacts;
+            _onTactAction = OnTact;
+            _battleController.OnTact += _onTactAction;
+            return UniTask.CompletedTask;
+        }
+
+        private void OnTact()
+        {
+            if (_token.IsCancellationRequested || _battleController.HeroHealth.CurrentHP <= 0)
+            {
+                Unsubscribe();
+                return;
             }
+
+            _tactsToNextHeal--;
+            if (_tactsToNextHeal > 0)
+                return;
+
+            _tactsToNextHeal = _intervalTacts;
+            Heal();
+            if (_healsLeft <= 0)
+                Unsubscribe();
+        }
+
+        private void Heal()
+        {
+            _battleController.HeroHealth.Heal(_healthvalue);
+            _healsLeft--;
+        }
+
+        private void Unsubscribe()
+        {
+            if (_onTactAction == null)
+                return;
+            _battleController.OnTact -= _onTactAction;
+            _onTactAction = null;
         }
     }
 }
-

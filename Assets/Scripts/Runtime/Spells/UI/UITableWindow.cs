@@ -1,6 +1,5 @@
 ﻿using DG.Tweening;
 using System;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,29 +17,42 @@ namespace Core.Spells.UI
         public bool IsFull => _curretnEmptyPositions >= _flasks.Length;
 
         /// <summary>
-        /// ЧАСЫ КОТЛА: срок остывания одного элемента, секунды (docs/10 §1).
-        /// Главная ручка ядра — крутится в инспекторе на объекте Table Window,
-        /// без перекомпиляции и даже в Play Mode. Замеренный такт схлопывания — 5 с,
-        /// рабочее значение срока — 8 с.
+        /// ЧАСЫ КОТЛА: запас ХВОСТА в ТАКТАХ МИРА, то есть в действиях игрока
+        /// (docs/10 §0.2, §1). Главная ручка ядра — крутится в инспекторе
+        /// на объекте Table Window, без перекомпиляции и даже в Play Mode.
+        /// Ноль выключает остывание целиком — удобно, чтобы снять чистый замер темпа.
         /// </summary>
-        public float CoolingSeconds => _coolingSeconds;
+        public int CoolingTacts => _coolingTacts;
 
         private const float _animDuration = 0.5f;
 
-        /// <summary>Скорость сглаживания кольца: модель тикает раз в 100 мс, вид догоняет плавно.</summary>
+        /// <summary>Скорость сглаживания кольца: модель тикает раз в ход, вид догоняет плавно.</summary>
         private const float RING_LERP_SPEED = 10f;
 
         /// <summary>Последние 25% срока — кольцо слота пульсирует (канал К3, движение, docs/12 §4.1).</summary>
         private const float ALARM_PART = 0.25f;
+
+        /// <summary>
+        /// Насколько приглушается кольцо элемента, который ЖДЁТ своей очереди тикать.
+        /// Яркость здесь — не единственный и не главный канал: «ждёт» читается прежде
+        /// всего полной дугой (у хвоста она короче и на глазах убывает) и неподвижностью
+        /// (пульсирует только хвост). Приглушение — третий, избыточный канал, ради него
+        /// одного цветом ничего не кодируется (docs/12 §9).
+        /// </summary>
+        private const float WAITING_ALPHA = 0.35f;
 
         [SerializeField] private UIFullFlask[] _flasks;
         [SerializeField] private Button _checkCombinationButton;
         [SerializeField] private TextMeshProUGUI _resultMergeText;
 
         [Header("Часы котла")]
-        [Tooltip("Срок остывания одного элемента, секунды. Рабочее число — 8 (замеренный такт схлопывания 5 с). Крутится вживую.")]
-        [SerializeField] private float _coolingSeconds = 8f;
-        [Tooltip("Кольцо остывания на КАЖДОМ слоте, по индексу слота, параллельно _flasks (docs/12 §5.2). Image: Type = Filled, Fill Method = Radial 360, Origin = Top, Clockwise.")]
+        [Tooltip("Запас ХВОСТА в ТАКТАХ МИРА — в действиях игрока (перелив или варка), не в секундах. " +
+                 "Тикает только хвостовой элемент; когда он уходит, следующий получает эти же N заново. " +
+                 "КАЛИБРОВАТЬ ПО ЗАМЕРУ «переливов на схлопывание» (TactMeter), а не по секундам: " +
+                 "давление не накопительное, поэтому при N заметно больше замера котёл не стынет никогда. " +
+                 "0 выключает остывание целиком.")]
+        [SerializeField] private int _coolingTacts = 8;
+        [Tooltip("Кольцо остывания на КАЖДОМ слоте, по индексу слота, параллельно _flasks (docs/12 §5.2). Живое кольцо всегда одно — на последнем занятом слоте. Image: Type = Filled, Fill Method = Radial 360, Origin = Top, Clockwise.")]
         [SerializeField] private Image[] _slotRings;
 
         [Header("Предпросмотр варки")]
@@ -60,7 +72,9 @@ namespace Core.Spells.UI
 
         private float[] _ringTargetFills;
         private bool[] _ringAlarms;
+        private bool[] _ringWaiting;
         private Vector3[] _ringBaseScales;
+        private Color[] _ringBaseColors;
         private Sprite _previewDefaultIcon;
         private Vector2 _resultTextBasePosition;
 
@@ -178,18 +192,24 @@ namespace Core.Spells.UI
         }
 
         /// <summary>
-        /// СВОЁ кольцо на каждом элементе котла (решение владельца после живой игры,
-        /// 01.08.2026, docs/12 §5.2). Одно общее кольцо на ободе отвечало на вопрос
-        /// «когда следующая потеря», но не на вопрос «слетит всё или один» — а спрашивают
-        /// игроки именно второе.
+        /// Кольца котла по ПРАВИЛУ ХВОСТА (решение владельца 02.08.2026).
         ///
-        /// Список приходит В ПОРЯДКЕ ГИБЕЛИ: [0] уйдёт первым. Раскладываем его
-        /// ОТ ХВОСТА К ГОЛОВЕ, потому что срабатывание любого срока снимает хвост
-        /// (`TableController.DropTail`): k-й по очереди срок = k-е удаление = k-й слот
-        /// с конца. Именно эта раздача делает слотовые кольца честными — кольцо гаснет
-        /// ровно на том слоте, с которого элемент и улетит.
+        /// Живое кольцо в котле ровно одно — на ПОСЛЕДНЕМ занятом слоте. Только у него
+        /// идёт счётчик, только его дуга убывает и только оно пульсирует на последних
+        /// тактах. Остальные занятые слоты стоят с ПОЛНЫМ приглушённым кольцом, и это
+        /// не заглушка, а правда: их запас не тронут, и, став хвостом, элемент начнёт
+        /// свои N с полного.
+        ///
+        /// Что этим чинится. И1 раздавала сроки по порядку гибели — ближайший на хвостовом
+        /// слоте, дальний на головном. Формально честно, на глаз — ложь: свежий элемент
+        /// получал самый старый срок, а старый выглядел перезапущенным. Теперь тикающий
+        /// слот и улетающий слот — один и тот же, и объяснять раскладку больше нечего.
+        ///
+        /// Отсюда и подпись: одно число вместо списка сроков. Кто хвост, вид знает сам.
         /// </summary>
-        public void SetCooling(IReadOnlyList<float> remainingSecondsByDeathOrder, float totalSeconds)
+        /// <param name="tailRemainingTacts">Сколько тактов осталось хвосту. 0 — никто не тикает.</param>
+        /// <param name="totalTacts">Полный запас, из него берётся доля кольца. 0 — остывание выключено.</param>
+        public void SetCooling(int tailRemainingTacts, int totalTacts)
         {
             if (_slotRings == null)
                 return;
@@ -197,30 +217,38 @@ namespace Core.Spells.UI
             // состояние колец обязано пережить такой порядок
             EnsureRingState();
 
-            int count = remainingSecondsByDeathOrder == null
-                ? 0
-                : Mathf.Min(remainingSecondsByDeathOrder.Count, _curretnEmptyPositions);
+            // остывание выключено ручкой: колец не должно быть вовсе. Приглушённое
+            // «полное» кольцо утверждало бы, что срок есть, — а его нет
+            bool isCoolingOn = totalTacts > 0;
+            int tailSlot = _curretnEmptyPositions - 1;
 
-            // Проход по СЛОТАМ, а не по срокам: слот без своего срока обязан быть погашен
+            // Проход по СЛОТАМ, а не по занятым: освободившийся слот обязан быть погашен
             // тем же кадром, иначе кольцо ушедшего хвоста застынет на последнем значении.
             for (int slot = 0; slot < _slotRings.Length; slot++)
             {
                 Image ring = _slotRings[slot];
+                bool isOccupied = slot < _curretnEmptyPositions;
 
-                // место слота в порядке гибели: хвост уходит первым, голова последней
-                int deathIndex = _curretnEmptyPositions - 1 - slot;
-                bool hasDeadline = deathIndex >= 0 && deathIndex < count;
-
-                if (!hasDeadline)
+                if (!isOccupied || !isCoolingOn)
                 {
                     _ringTargetFills[slot] = 0f;
                     SetAlarm(slot, false);
+                    SetWaiting(slot, false);
                     continue;
                 }
 
-                float normalized = totalSeconds <= 0f
-                    ? 0f
-                    : Mathf.Clamp01(remainingSecondsByDeathOrder[deathIndex] / totalSeconds);
+                if (slot != tailSlot)
+                {
+                    // ЖДЁТ: запас цел и не расходуется — кольцо полное и приглушённое
+                    _ringTargetFills[slot] = 1f;
+                    SetAlarm(slot, false);
+                    SetWaiting(slot, true);
+                    continue;
+                }
+
+                // ТИКАЕТ: деление целых тактов — обязательно во float, иначе кольцо
+                // схлопнется в ступеньку «1 или 0» и перестанет что-либо показывать
+                float normalized = Mathf.Clamp01((float)tailRemainingTacts / totalTacts);
                 _ringTargetFills[slot] = normalized;
 
                 // Свежий слот: кольцо обязано родиться полным, а не наползать снизу.
@@ -229,6 +257,7 @@ namespace Core.Spells.UI
                 if (ring != null && ring.fillAmount <= 0.001f)
                     ring.fillAmount = normalized;
 
+                SetWaiting(slot, false);
                 SetAlarm(slot, normalized <= ALARM_PART);
             }
         }
@@ -236,7 +265,7 @@ namespace Core.Spells.UI
         /// <summary>Котёл пуст — часам нечего показывать, кольца гасим сразу и жёстко.</summary>
         public void ClearCooling()
         {
-            SetCooling(null, _coolingSeconds);
+            SetCooling(0, _coolingTacts);
             if (_slotRings == null)
                 return;
 
@@ -315,11 +344,35 @@ namespace Core.Spells.UI
         }
 
         /// <summary>
+        /// «ЖДЁТ» против «ТИКАЕТ»: приглушение кольца у элемента, чей счётчик стоит.
+        /// Нужно потому, что по правилу хвоста полная дуга сама по себе двусмысленна —
+        /// у хвоста она тоже полная в первый такт. Приглушение снимает эту двусмысленность
+        /// мгновенно: яркое кольцо в котле ровно одно, и оно же единственное в опасности.
+        ///
+        /// Меняется только альфа авторского цвета, а не оттенок: перекрашивать кольцо
+        /// значило бы завести цветовой код там, где сигнал уже несут дуга и движение.
+        /// </summary>
+        private void SetWaiting(int slot, bool isWaiting)
+        {
+            if (_slotRings == null || slot < 0 || slot >= _slotRings.Length)
+                return;
+
+            Image ring = _slotRings[slot];
+            if (ring == null || _ringWaiting[slot] == isWaiting)
+                return;
+            _ringWaiting[slot] = isWaiting;
+
+            Color baseColor = _ringBaseColors[slot];
+            ring.color = isWaiting
+                ? new Color(baseColor.r, baseColor.g, baseColor.b, baseColor.a * WAITING_ALPHA)
+                : baseColor;
+        }
+
+        /// <summary>
         /// Последние 25% срока — кольцо ЭТОГО слота пульсирует (К3, движение, docs/12 §4.1).
-        /// Тревога пер-кольцо, а не общая: когда пульсируют три кольца из четырёх, это
-        /// и значит «сейчас слетит не один» — тот самый вопрос, на который общее кольцо
-        /// не отвечало. Цвет колец при этом не меняется: цвет — не канал (docs/12 §9),
-        /// сигнал несут длина дуги и движение.
+        /// По правилу хвоста пульсировать может только хвостовое кольцо: остальные не тикают,
+        /// и тревога на них была бы прямой ложью. Цвет при этом не меняется: цвет — не канал
+        /// (docs/12 §9), сигнал несут длина дуги и движение.
         /// </summary>
         private void SetAlarm(int slot, bool isAlarm)
         {
@@ -343,6 +396,7 @@ namespace Core.Spells.UI
                 .SetLink(gameObject);
         }
 
+        /// <summary>Окно уходит: гасим и пульсацию, и приглушение, чтобы кольца вернулись авторскими.</summary>
         private void StopAllAlarms()
         {
             if (_slotRings == null)
@@ -350,13 +404,17 @@ namespace Core.Spells.UI
             EnsureRingState();
 
             for (int i = 0; i < _slotRings.Length; i++)
+            {
                 SetAlarm(i, false);
+                SetWaiting(i, false);
+            }
         }
 
         /// <summary>
         /// Ленивая инициализация состояния колец — по одной ячейке на слот.
-        /// Базовый масштаб запоминается до первой тревоги: пульсация возвращает
-        /// кольцо именно в него, а не в <c>Vector3.one</c>.
+        /// Базовый масштаб и базовый цвет запоминаются до первой тревоги и первого
+        /// приглушения: и пульсация, и «ждёт» возвращают кольцо именно в них,
+        /// а не в <c>Vector3.one</c> и не в белый.
         /// </summary>
         private void EnsureRingState()
         {
@@ -366,9 +424,14 @@ namespace Core.Spells.UI
 
             _ringTargetFills = new float[ringCount];
             _ringAlarms = new bool[ringCount];
+            _ringWaiting = new bool[ringCount];
             _ringBaseScales = new Vector3[ringCount];
+            _ringBaseColors = new Color[ringCount];
             for (int i = 0; i < ringCount; i++)
+            {
                 _ringBaseScales[i] = _slotRings[i] != null ? _slotRings[i].rectTransform.localScale : Vector3.one;
+                _ringBaseColors[i] = _slotRings[i] != null ? _slotRings[i].color : Color.white;
+            }
         }
 
         private void HideFlask(int index)

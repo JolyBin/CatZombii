@@ -1,4 +1,4 @@
-using Core.Flask.Models;
+﻿using Core.Flask.Models;
 using Core.Flask.UI;
 using System;
 using System.Collections.Generic;
@@ -24,6 +24,14 @@ namespace Core.Flask
         private Element[] _uniqElements;
         UIFlaskWindow _window;
 
+        /// <summary>
+        /// Ввод заблокирован: колбы не принимают ни выбор, ни перелив.
+        /// Так закрывается вторая половина бага №12 — пазл больше не живёт под окном
+        /// победы и поражения. В пошаговом мире этого достаточно и ничего сложнее
+        /// не нужно: перелив — единственный способ двинуть мир, нет перелива — нет мира.
+        /// </summary>
+        private bool _isInputLocked;
+
         public FlaskController(IUIService uiService, Element[] currentElements)
         {
             _uiService = uiService;
@@ -37,6 +45,7 @@ namespace Core.Flask
             _window = _uiService.Show<UIFlaskWindow>();
             _actions = new();
             _uiFlasks = new();
+            _isInputLocked = false;
             // сколько колб — решает сцена (массив позиций окна), а не константа в коде
             UIFlask[] uIFlasks = _window.GetUIFlasks(_window.FlaskPositionsCount);
             Flask[] flasks = new Flask[uIFlasks.Length];
@@ -102,8 +111,27 @@ namespace Core.Flask
             keyValue.Key.UpdateFlask(generatorResults);
         }
 
+        /// <summary>
+        /// Партия кончилась (окно победы или поражения) — переливы больше не принимаются.
+        /// Уже поднятая колба опускается на место, чтобы под окном итога не осталось
+        /// висеть незавершённое действие.
+        /// </summary>
+        public void LockInput()
+        {
+            if (_isInputLocked)
+                return;
+            _isInputLocked = true;
+            if (_selectedFlask != null)
+                UnselectFlask();
+        }
+
+        public void UnlockInput() => _isInputLocked = false;
+
         private void ReactClickCommand(Flask flask)
         {
+            if (_isInputLocked)
+                return;
+
             if (_selectedFlask == null)
                 SelectFask(flask);
             else if (_selectedFlask == flask)

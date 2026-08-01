@@ -1,11 +1,10 @@
-using Core.Battle;
+﻿using Core.Battle;
 using Core.Flask;
 using Core.Spells;
 using Core.Steps.UI;
-using Cysharp.Threading.Tasks;
 using Meta;
+using System;
 using System.Threading;
-using UnityEngine;
 using Utility.Services.UI;
 
 namespace Core.Steps
@@ -22,6 +21,19 @@ namespace Core.Steps
         private HomeController _homeController;
         private BattleController _battleController;
         private Book _currentBook;
+
+        /// <summary>
+        /// Часы мира: единственный источник времени партии (docs/10 §0.2).
+        /// Собираются здесь, потому что здесь же лежат все три системы, которые
+        /// такт затрагивает, — колбы (источник действий), котёл и бой.
+        /// </summary>
+        private WorldClock _worldClock;
+
+        /// <summary>
+        /// Один и тот же обработчик на оба действия игрока — перелив и варку.
+        /// Хранится полем ради парной отписки в <see cref="Exit"/>.
+        /// </summary>
+        private Action _tickAction;
 
         /// <summary>
         /// Токен жизни партии: отменяется в Exit(), гасит все отложенные эффекты боя.
@@ -50,15 +62,32 @@ namespace Core.Steps
             _battleController.OnAllEnemyDie += ShowWinWindow;
             _battleController.OnHeroDie += ShowLoseWindow;
             _battleController.Init(_partyCts.Token);
-            // часы котла живут ровно столько же, сколько бой: токен боя создаётся
-            // внутри BattleController.Init(), поэтому котёл поднимается строго после него
-            _tableController.Init(_battleController.BattleToken);
+            _tableController.Init();
+
+            // ЕДИНСТВЕННЫЙ ВХОД ТАКТА. Оба действия игрока идут в один и тот же метод,
+            // а порядок обработки внутри такта живёт целиком в WorldClock.Tick —
+            // ни котёл, ни бой не подписаны на MoveCommand напрямую и не могут
+            // «переставить» друг друга порядком подписки.
+            _worldClock = new WorldClock(_tableController, _battleController);
+            _tickAction = _worldClock.Tick;
+            _flaskController.MoveCommand += _tickAction;
+            _tableController.OnBrewCommand += _tickAction;
+            _worldClock.Start();
         }
 
         private void Exit()
         {
             if (_partyCts != null && !_partyCts.IsCancellationRequested)
                 _partyCts.Cancel();
+
+            if (_tickAction != null)
+            {
+                _flaskController.MoveCommand -= _tickAction;
+                _tableController.OnBrewCommand -= _tickAction;
+                _tickAction = null;
+            }
+            _worldClock?.Stop();
+            _worldClock = null;
 
             _battleController.OnAllEnemyDie -= ShowWinWindow;
             _battleController.OnHeroDie -= ShowLoseWindow;
@@ -76,8 +105,22 @@ namespace Core.Steps
             _homeController.OpenWindow();
         }
 
+        /// <summary>
+        /// Партия кончилась любым исходом: мир останавливается и перестаёт принимать
+        /// действия. Это и есть вторая половина бага №12 — пазл больше не живёт
+        /// под окном итога. Пошаговость делает лечение полным: остановить приём
+        /// действий = остановить мир, отдельного «замораживателя» не требуется.
+        /// </summary>
+        private void FinishParty()
+        {
+            _worldClock?.Stop();
+            _flaskController.LockInput();
+            _tableController.LockInput();
+        }
+
         private void ShowWinWindow()
         {
+            FinishParty();
             _winWindow = _uiService.Show<UIWinWindow>();
             _winWindow.OnClickContinueButton += () =>
             {
@@ -89,6 +132,7 @@ namespace Core.Steps
 
         private void ShowLoseWindow()
         {
+            FinishParty();
             _loseWindow = _uiService.Show<UILoseWindow>();
             _loseWindow.OnClickContinueButton += () =>
             {

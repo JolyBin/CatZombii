@@ -1,6 +1,6 @@
-using Core.Battle;
+﻿using Core.Battle;
+using Core.Steps;
 using Cysharp.Threading.Tasks;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 
@@ -10,41 +10,52 @@ namespace Core.Spells
     public class FastAttackSpellConfig : BaseSpellConfig
     {
         [field: SerializeField] public int Damage { get; private set; }
+
+        /// <summary>
+        /// Наследие real-time: длительность стана в секундах, как записано в ассете.
+        /// В пошаговом мире стан считается в ХОДАХ — иначе он таял бы, пока игрок думает,
+        /// и снимался бы бесплатно. Перевод идёт единственным множителем конверсии
+        /// (<see cref="WorldClock.MILLISECONDS_PER_TACT"/>), см. <see cref="StunTacts"/>.
+        /// </summary>
         [field: SerializeField] public int StunTimer { get; private set; }
+
+        /// <summary>Стан в тактах мира — сколько своих ходов цель пропустит.</summary>
+        public int StunTacts => WorldClock.TactsFromSeconds(StunTimer);
 
         public override int PreviewValue => Damage;
 
-        public override BaseSpell GetSpell() => new FastAttackSpell(Damage, StunTimer);
+        public override BaseSpell GetSpell() => new FastAttackSpell(Damage, StunTacts);
     }
 
     public class FastAttackSpell : BaseSpell
     {
         private int _damage;
-        private int _stunTimer;
+        private int _stunTacts;
 
-        public FastAttackSpell(int damage, int stunTimer)
+        public FastAttackSpell(int damage, int stunTacts)
         {
             _damage = damage;
-            _stunTimer = stunTimer;
+            _stunTacts = stunTacts;
         }
-        public override async UniTask ApplySpell(BattleController battleController, CancellationToken token)
+
+        /// <summary>
+        /// Стал синхронным: ждать больше нечего. Раньше стан держался парой
+        /// StopAttack + UniTask.Delay + ContinueAttack, и это была та самая дыра
+        /// из бага №7 — теперь цель просто пропускает N своих ходов.
+        /// </summary>
+        public override UniTask ApplySpell(BattleController battleController, CancellationToken token)
         {
             if (battleController.EnemySquad.Length == 0)
-                return;
+                return UniTask.CompletedTask;
             UnitRuntime primaryTarget = battleController.HeroTarget;
             if (primaryTarget == null)
-                return;
+                return UniTask.CompletedTask;
             primaryTarget.Health.TakeDamage(_damage);
             if (primaryTarget.Health.CurrentHP <= 0)
-                return;
-            primaryTarget.TargetController.StopAttack();
+                return UniTask.CompletedTask;
 
-            bool isCanceled = await UniTask.Delay(_stunTimer * 1000, cancellationToken: token).SuppressCancellationThrow();
-            if (isCanceled)
-                return;
-            if (primaryTarget.Health.CurrentHP <= 0)
-                return;
-            primaryTarget.TargetController.ContinueAttack();
+            primaryTarget.TargetController.Stun(_stunTacts);
+            return UniTask.CompletedTask;
         }
     }
 }

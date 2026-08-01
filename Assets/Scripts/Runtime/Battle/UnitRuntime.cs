@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Core.Battle
 {
@@ -16,20 +16,24 @@ namespace Core.Battle
         public UnitRuntime(UnitConfig unit, BattleController battleController)
         {
             ID = unit.ID;
+            // кулдаун берётся в ТАКТАХ мира: миллисекунды из ассета переводит UnitConfig
+            int cooldownTacts = unit.AttackCooldownTacts;
+
             Health = new Health(unit.HP, unit.TargetPriority);
-            TargetController = new TargetController(unit.AttackCooldown);
+            TargetController = new TargetController(cooldownTacts);
             UIUnit = GameObject.Instantiate<UIUnit>(unit.UnitPrefab);
             UIUnit.Init();
 
             Health.OnChanged += UIUnit.SetHealth;
             UIUnit.SetHealth(Health.CurrentHP, Health.MaxHP);
             UIUnit.SetName(unit.Name);
-            if (unit.AttackCooldown > 0)
+            if (cooldownTacts > 0)
             {
 
                 _unitSpell = unit.AttackConfig.GetUnitSpell();
                 UIUnit.SetActiveTimer(true);
-                UIUnit.SetTimer(0, unit.AttackCooldown);
+                // на старте показываем полный запас ходов, а не ноль: «через сколько ударит»
+                UIUnit.SetTimer(cooldownTacts, cooldownTacts);
 
                 TargetController.OnTimerChanged += UIUnit.SetTimer;
                 _unitSpell.InitSpell(this, battleController);
