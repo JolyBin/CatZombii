@@ -9,6 +9,12 @@ namespace Core.Flask.UI
 {
     public class UIFlaskWindow : UIWindow
     {
+        /// <summary>
+        /// Сколько колб реально есть на сцене. Источник истины — массив позиций,
+        /// а не константа в коде: иначе код и сцена расходятся.
+        /// </summary>
+        public int FlaskPositionsCount => _falskPositions.Length;
+
         [SerializeField] private UIFlask _uiFlaskPrefab;
         [SerializeField] private Transform _poolContainer;
         [SerializeField] private RectTransform[] _falskPositions;
@@ -54,6 +60,10 @@ namespace Core.Flask.UI
         public UIFlask[] GetUIFlasks(int numbers)
         {
             EnsurePool();
+
+            // больше колб, чем позиций на сцене, отдать нельзя — при рассинхроне
+            // вернём сколько есть, а не выйдем за границы массива
+            numbers = Mathf.Clamp(numbers, 0, _falskPositions.Length);
 
             UIFlask[] result = new UIFlask[numbers];
             for (int i = 0; i < numbers; i++)

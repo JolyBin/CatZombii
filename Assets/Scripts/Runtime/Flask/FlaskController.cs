@@ -12,7 +12,6 @@ namespace Core.Flask
 
 
         private const int FLASK_MAX_SIZE = 4;
-        private const int FLASK_COUNT = 6;
 
         public event Action<Element> OnFlaskFull;
         public event Action MoveCommand;
@@ -38,7 +37,8 @@ namespace Core.Flask
         {
             _window = _uiService.Show<UIFlaskWindow>();
             _actions = new();
-            UIFlask[] uIFlasks = _window.GetUIFlasks(FLASK_COUNT);
+            // сколько колб — решает сцена (массив позиций окна), а не константа в коде
+            UIFlask[] uIFlasks = _window.GetUIFlasks(_window.FlaskPositionsCount);
             Flask[] flasks = new Flask[uIFlasks.Length];
             _generator = new ElementsGenerator(_uniqElements, 500);
             InitializeFlasks(_uniqElements, flasks, uIFlasks, FLASK_MAX_SIZE);
@@ -72,23 +72,25 @@ namespace Core.Flask
             {
                 Element[] generatorResults = _generator.GetElements(4, 4);
                 uIFlasks[i].InitializeFlask();
-                uIFlasks[i].SetElements(generatorResults);
-                _uiFlasks.Add(new Flask(4, generatorResults), uIFlasks[i]);
+                Flask flask = new Flask(4, generatorResults);
+                uIFlasks[i].Bind(flask);
+                _uiFlasks.Add(flask, uIFlasks[i]);
             }
 
             for (int i = flasks.Length - 2; i < flasks.Length; i++)
             {
                 Element[] generatorResults = _generator.GetElements(0, 4);
                 uIFlasks[i].InitializeFlask();
-                uIFlasks[i].SetElements(generatorResults);
-                _uiFlasks.Add(new Flask(4, generatorResults), uIFlasks[i]);
+                Flask flask = new Flask(4, generatorResults);
+                uIFlasks[i].Bind(flask);
+                _uiFlasks.Add(flask, uIFlasks[i]);
             }
         }
 
         private void UpdateFlask(KeyValuePair<Flask, UIFlask> keyValue)
         {
             Element[] generatorResults = _generator.GetElements(4, 4);
-            keyValue.Value.RemoveAllElements(generatorResults);
+            // вид привязан к модели: перерисовка придёт из UpdateFlask через OnChanged
             keyValue.Key.UpdateFlask(generatorResults);
         }
 
@@ -121,10 +123,9 @@ namespace Core.Flask
             if(flask.IsPossiblePushElement)
             {
                 
+                // оба вида перерисуются сами по OnChanged модели — отсюда содержимое не трогаем
                 Element element = _selectedFlask.PopElement();
                 _uiFlasks[_selectedFlask].DeselectElement();
-                _uiFlasks[_selectedFlask].RemoveElement();
-                _uiFlasks[flask].AddElement(element);
                 flask.PushElement(element);
                 _selectedFlask = null;
                 MoveCommand?.Invoke();
