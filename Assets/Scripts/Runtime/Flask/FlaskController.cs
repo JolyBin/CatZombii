@@ -2,6 +2,7 @@ using Core.Flask.Models;
 using Core.Flask.UI;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Utility.Diagnostics; // TactMeter (временный замер, Шаг 0) — удалить вместе с TactMeter.cs
 using Utility.Services.UI;
 
@@ -10,8 +11,6 @@ namespace Core.Flask
     public class FlaskController : IAction
     {
 
-
-        private const int FLASK_MAX_SIZE = 4;
 
         public event Action<Element> OnFlaskFull;
         public event Action MoveCommand;
@@ -37,11 +36,14 @@ namespace Core.Flask
         {
             _window = _uiService.Show<UIFlaskWindow>();
             _actions = new();
+            _uiFlasks = new();
             // сколько колб — решает сцена (массив позиций окна), а не константа в коде
             UIFlask[] uIFlasks = _window.GetUIFlasks(_window.FlaskPositionsCount);
             Flask[] flasks = new Flask[uIFlasks.Length];
             _generator = new ElementsGenerator(_uniqElements, 500);
-            InitializeFlasks(_uniqElements, flasks, uIFlasks, FLASK_MAX_SIZE);
+            // вместимость колбы тоже задана сценой — числом «уровней воды» в префабе колбы
+            int flaskMaxSize = uIFlasks.FirstOrDefault()?.Capacity ?? 0;
+            InitializeFlasks(_uniqElements, flasks, uIFlasks, flaskMaxSize);
 
             TactMeter.BeginBattle();                              // TactMeter (временный замер, Шаг 0)
             OnFlaskFull += _ => TactMeter.RegisterCollapse();     // TactMeter (временный замер, Шаг 0)
@@ -67,21 +69,24 @@ namespace Core.Flask
 
         private void InitializeFlasks(Element[] elements, Flask[] flasks, UIFlask[] uIFlasks, int maxSize)
         {
-            
-            for (int i = 0; i < flasks.Length - 2; i++)
+            // две последние колбы стартуют пустыми, остальные полными; при одной-двух
+            // позициях на сцене полных не остаётся — но за границы массива не выходим
+            int fullCount = Math.Max(0, flasks.Length - 2);
+
+            for (int i = 0; i < fullCount; i++)
             {
-                Element[] generatorResults = _generator.GetElements(4, 4);
+                Element[] generatorResults = _generator.GetElements(maxSize, maxSize);
                 uIFlasks[i].InitializeFlask();
-                Flask flask = new Flask(4, generatorResults);
+                Flask flask = new Flask(maxSize, generatorResults);
                 uIFlasks[i].Bind(flask);
                 _uiFlasks.Add(flask, uIFlasks[i]);
             }
 
-            for (int i = flasks.Length - 2; i < flasks.Length; i++)
+            for (int i = fullCount; i < flasks.Length; i++)
             {
-                Element[] generatorResults = _generator.GetElements(0, 4);
+                Element[] generatorResults = _generator.GetElements(0, maxSize);
                 uIFlasks[i].InitializeFlask();
-                Flask flask = new Flask(4, generatorResults);
+                Flask flask = new Flask(maxSize, generatorResults);
                 uIFlasks[i].Bind(flask);
                 _uiFlasks.Add(flask, uIFlasks[i]);
             }
@@ -89,7 +94,9 @@ namespace Core.Flask
 
         private void UpdateFlask(KeyValuePair<Flask, UIFlask> keyValue)
         {
-            Element[] generatorResults = _generator.GetElements(4, 4);
+            // вместимость знает сама модель — второго числа рядом с ней не заводим
+            int maxSize = keyValue.Key.MaxSize;
+            Element[] generatorResults = _generator.GetElements(maxSize, maxSize);
             // вид привязан к модели: перерисовка придёт из UpdateFlask через OnChanged
             keyValue.Key.UpdateFlask(generatorResults);
         }

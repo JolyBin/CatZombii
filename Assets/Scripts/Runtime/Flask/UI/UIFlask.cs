@@ -12,6 +12,12 @@ namespace Core.Flask.UI
 
         public event Action ButtonClickCommand;
 
+        /// <summary>
+        /// Вместимость колбы: сколько «уровней воды» нарисовано в префабе.
+        /// Источник истины — сцена, а не константа в коде.
+        /// </summary>
+        public int Capacity => _waterImages.Length;
+
         [field: SerializeField] public RectTransform RectTransform { get; private set; }
 
         [SerializeField] private RectTransform _ballContainer;
@@ -65,21 +71,6 @@ namespace Core.Flask.UI
             Redraw();
         }
 
-        public void SetElements(Element[] startElements) => RenderFromModelOr(startElements);
-
-        public void AddElement(Element startElements)
-        {
-            if (_flask != null)
-            {
-                Render(_flask.GetElements());
-                return;
-            }
-            if (_content.Count >= _waterImages.Length)
-                return;
-            _content.Add(startElements);
-            Redraw();
-        }
-
         public void SelectElement()
         {
             RectTransform.position = _selectedPosition.position;
@@ -90,21 +81,6 @@ namespace Core.Flask.UI
             RectTransform.position = _basePosition;
         }
 
-        public void RemoveElement()
-        {
-            if (_flask != null)
-            {
-                Render(_flask.GetElements());
-                return;
-            }
-            if (_content.Count == 0)
-                return;
-            _content.RemoveAt(_content.Count - 1);
-            Redraw();
-        }
-
-        public void RemoveAllElements(Element[] newElements) => RenderFromModelOr(newElements);
-
         public void Dispose()
         {
             _button.onClick.RemoveAllListeners(); //TODO: надо нормально пул как-то очистить
@@ -114,16 +90,6 @@ namespace Core.Flask.UI
         {
             ButtonClickCommand = null;
             Unbind();
-        }
-
-        private void RenderFromModelOr(Element[] fallbackElements)
-        {
-            if (_flask != null)
-            {
-                Render(_flask.GetElements());
-                return;
-            }
-            Render(fallbackElements);
         }
 
         private void Redraw()
