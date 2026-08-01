@@ -2,6 +2,7 @@ using Core.Flask.Models;
 using Core.Flask.UI;
 using System;
 using System.Collections.Generic;
+using Utility.Diagnostics; // TactMeter (временный замер, Шаг 0) — удалить вместе с TactMeter.cs
 using Utility.Services.UI;
 
 namespace Core.Flask
@@ -41,6 +42,9 @@ namespace Core.Flask
             Flask[] flasks = new Flask[uIFlasks.Length];
             _generator = new ElementsGenerator(_uniqElements, 500);
             InitializeFlasks(_uniqElements, flasks, uIFlasks, FLASK_MAX_SIZE);
+
+            TactMeter.BeginBattle();                              // TactMeter (временный замер, Шаг 0)
+            OnFlaskFull += _ => TactMeter.RegisterCollapse();     // TactMeter (временный замер, Шаг 0)
         }
 
 
@@ -142,6 +146,7 @@ namespace Core.Flask
 
         public void Exit()
         {
+            TactMeter.EndBattle();                               // TactMeter (временный замер, Шаг 0)
             ClearAction();
             OnFlaskFull = null;
             _window.Hide();
