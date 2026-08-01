@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,7 +30,7 @@ namespace Core.Spells.UI
         /// <summary>Скорость сглаживания кольца: модель тикает раз в 100 мс, вид догоняет плавно.</summary>
         private const float RING_LERP_SPEED = 10f;
 
-        /// <summary>Последние 25% срока — кольцо пульсирует (канал К3, движение, docs/12 §4.1).</summary>
+        /// <summary>Последние 25% срока — кольцо слота пульсирует (канал К3, движение, docs/12 §4.1).</summary>
         private const float ALARM_PART = 0.25f;
 
         [SerializeField] private UIFullFlask[] _flasks;
@@ -39,16 +40,8 @@ namespace Core.Spells.UI
         [Header("Часы котла")]
         [Tooltip("Срок остывания одного элемента, секунды. Рабочее число — 8 (замеренный такт схлопывания 5 с). Крутится вживую.")]
         [SerializeField] private float _coolingSeconds = 8f;
-        [Tooltip("Одно кольцо на ободе котла (docs/12 §5.2). Image: Type = Filled, Fill Method = Radial 360.")]
-        [SerializeField] private Image _coolingRing;
-        [Tooltip("Секунды до ближайшей потери, один знак после запятой.")]
-        [SerializeField] private TextMeshProUGUI _coolingText;
-        [Tooltip("Маркер «уйдёт этот»: переезжает на хвостовой слот при каждой вставке.")]
-        [SerializeField] private RectTransform _tailMarker;
-        [Tooltip("Замеренный такт схлопывания колбы, секунды. Переводит время кольца в такты игрока.")]
-        [SerializeField] private float _tactSeconds = 5f;
-        [Tooltip("Держатели насечек: [0] — «один такт», [1] — «два такта». Угол ставит код из такта и срока.")]
-        [SerializeField] private RectTransform[] _tactNotches;
+        [Tooltip("Кольцо остывания на КАЖДОМ слоте, по индексу слота, параллельно _flasks (docs/12 §5.2). Image: Type = Filled, Fill Method = Radial 360, Origin = Top, Clockwise.")]
+        [SerializeField] private Image[] _slotRings;
 
         [Header("Предпросмотр варки")]
         [Tooltip("Иконка текущего заклинания. Пустая иконка у конфига — остаётся иконка по умолчанию.")]
@@ -65,18 +58,16 @@ namespace Core.Spells.UI
         private Sequence _sequence;
         private int _curretnEmptyPositions;
 
-        private float _ringTargetFill;
-        private bool _isAlarm;
-        private Vector3 _ringBaseScale = Vector3.one;
+        private float[] _ringTargetFills;
+        private bool[] _ringAlarms;
+        private Vector3[] _ringBaseScales;
         private Sprite _previewDefaultIcon;
         private Vector2 _resultTextBasePosition;
-        private float _placedNotchCooling = -1f;
-        private float _placedNotchTact = -1f;
 
         private void Awake()
         {
-            if (_coolingRing != null)
-                _ringBaseScale = _coolingRing.rectTransform.localScale;
+            EnsureRingState();
+
             if (_previewIcon != null)
                 _previewDefaultIcon = _previewIcon.sprite;
             if (_resultMergeText != null)
@@ -85,13 +76,21 @@ namespace Core.Spells.UI
 
         private void Update()
         {
-            // Кольцо ставится ИЗ МОДЕЛИ, а не твином (docs/12 §5.5): иначе любое будущее
+            // Кольца ставятся ИЗ МОДЕЛИ, а не твином (docs/12 §5.5): иначе любое будущее
             // ускорение часов рассинхронит картинку и правду. Здесь только сглаживание.
-            if (_coolingRing != null)
-                _coolingRing.fillAmount = Mathf.Lerp(_coolingRing.fillAmount, _ringTargetFill, Time.deltaTime * RING_LERP_SPEED);
+            if (_slotRings == null)
+                return;
+            // массив колец — сериализованный, его могут переставить в инспекторе прямо
+            // в Play Mode, как и срок остывания рядом
+            EnsureRingState();
 
-            UpdateTailMarker();
-            PlaceTactNotches();
+            for (int i = 0; i < _slotRings.Length; i++)
+            {
+                Image ring = _slotRings[i];
+                if (ring == null)
+                    continue;
+                ring.fillAmount = Mathf.Lerp(ring.fillAmount, _ringTargetFills[i], Time.deltaTime * RING_LERP_SPEED);
+            }
         }
 
         public override void Show()
@@ -109,7 +108,7 @@ namespace Core.Spells.UI
         {
             _checkCombinationButton.onClick.RemoveAllListeners();
             OnClickCheckCombinationButton = null;
-            SetAlarm(false);
+            StopAllAlarms();
             base.Hide(onHide);
         }
 
@@ -179,29 +178,71 @@ namespace Core.Spells.UI
         }
 
         /// <summary>
-        /// Остаток до ближайшей потери. Одно число на весь котёл — потому что каждая
-        /// вставка запускает свой срок, а срабатывание любого снимает хвост (docs/12 §5.2).
+        /// СВОЁ кольцо на каждом элементе котла (решение владельца после живой игры,
+        /// 01.08.2026, docs/12 §5.2). Одно общее кольцо на ободе отвечало на вопрос
+        /// «когда следующая потеря», но не на вопрос «слетит всё или один» — а спрашивают
+        /// игроки именно второе.
+        ///
+        /// Список приходит В ПОРЯДКЕ ГИБЕЛИ: [0] уйдёт первым. Раскладываем его
+        /// ОТ ХВОСТА К ГОЛОВЕ, потому что срабатывание любого срока снимает хвост
+        /// (`TableController.DropTail`): k-й по очереди срок = k-е удаление = k-й слот
+        /// с конца. Именно эта раздача делает слотовые кольца честными — кольцо гаснет
+        /// ровно на том слоте, с которого элемент и улетит.
         /// </summary>
-        public void SetCooling(float remainingSeconds, float totalSeconds)
+        public void SetCooling(IReadOnlyList<float> remainingSecondsByDeathOrder, float totalSeconds)
         {
-            float normalized = totalSeconds <= 0f ? 0f : Mathf.Clamp01(remainingSeconds / totalSeconds);
-            _ringTargetFill = normalized;
+            if (_slotRings == null)
+                return;
+            // Show() зовут из UIService раньше, чем отработает Awake этого окна, —
+            // состояние колец обязано пережить такой порядок
+            EnsureRingState();
 
-            if (_coolingText != null)
-                _coolingText.text = Mathf.Max(0f, remainingSeconds).ToString("0.0");
+            int count = remainingSecondsByDeathOrder == null
+                ? 0
+                : Mathf.Min(remainingSecondsByDeathOrder.Count, _curretnEmptyPositions);
 
-            SetAlarm(normalized <= ALARM_PART);
+            // Проход по СЛОТАМ, а не по срокам: слот без своего срока обязан быть погашен
+            // тем же кадром, иначе кольцо ушедшего хвоста застынет на последнем значении.
+            for (int slot = 0; slot < _slotRings.Length; slot++)
+            {
+                Image ring = _slotRings[slot];
+
+                // место слота в порядке гибели: хвост уходит первым, голова последней
+                int deathIndex = _curretnEmptyPositions - 1 - slot;
+                bool hasDeadline = deathIndex >= 0 && deathIndex < count;
+
+                if (!hasDeadline)
+                {
+                    _ringTargetFills[slot] = 0f;
+                    SetAlarm(slot, false);
+                    continue;
+                }
+
+                float normalized = totalSeconds <= 0f
+                    ? 0f
+                    : Mathf.Clamp01(remainingSecondsByDeathOrder[deathIndex] / totalSeconds);
+                _ringTargetFills[slot] = normalized;
+
+                // Свежий слот: кольцо обязано родиться полным, а не наползать снизу.
+                // Иначе полсекунды после вставки самым пустым выглядит новичок —
+                // то есть картинка врёт ровно про то, ради чего её и рисуют.
+                if (ring != null && ring.fillAmount <= 0.001f)
+                    ring.fillAmount = normalized;
+
+                SetAlarm(slot, normalized <= ALARM_PART);
+            }
         }
 
-        /// <summary>Котёл пуст — часам нечего показывать.</summary>
+        /// <summary>Котёл пуст — часам нечего показывать, кольца гасим сразу и жёстко.</summary>
         public void ClearCooling()
         {
-            _ringTargetFill = 0f;
-            if (_coolingRing != null)
-                _coolingRing.fillAmount = 0f;
-            if (_coolingText != null)
-                _coolingText.text = string.Empty;
-            SetAlarm(false);
+            SetCooling(null, _coolingSeconds);
+            if (_slotRings == null)
+                return;
+
+            for (int i = 0; i < _slotRings.Length; i++)
+                if (_slotRings[i] != null)
+                    _slotRings[i].fillAmount = 0f;
         }
 
         /// <summary>
@@ -273,72 +314,61 @@ namespace Core.Spells.UI
             resultSequence.SetLink(gameObject);
         }
 
-        private void SetAlarm(bool isAlarm)
+        /// <summary>
+        /// Последние 25% срока — кольцо ЭТОГО слота пульсирует (К3, движение, docs/12 §4.1).
+        /// Тревога пер-кольцо, а не общая: когда пульсируют три кольца из четырёх, это
+        /// и значит «сейчас слетит не один» — тот самый вопрос, на который общее кольцо
+        /// не отвечало. Цвет колец при этом не меняется: цвет — не канал (docs/12 §9),
+        /// сигнал несут длина дуги и движение.
+        /// </summary>
+        private void SetAlarm(int slot, bool isAlarm)
         {
-            if (_coolingRing == null || _isAlarm == isAlarm)
-                return;
-            _isAlarm = isAlarm;
-
-            _coolingRing.rectTransform.DOKill();
-            _coolingRing.rectTransform.localScale = _ringBaseScale;
-
-            if (!_isAlarm)
+            if (_slotRings == null || slot < 0 || slot >= _slotRings.Length)
                 return;
 
-            _coolingRing.rectTransform
-                .DOScale(_ringBaseScale * 1.08f, 0.25f)
+            Image ring = _slotRings[slot];
+            if (ring == null || _ringAlarms[slot] == isAlarm)
+                return;
+            _ringAlarms[slot] = isAlarm;
+
+            ring.rectTransform.DOKill();
+            ring.rectTransform.localScale = _ringBaseScales[slot];
+
+            if (!isAlarm)
+                return;
+
+            ring.rectTransform
+                .DOScale(_ringBaseScales[slot] * 1.12f, 0.25f)
                 .SetLoops(-1, LoopType.Yoyo)
                 .SetLink(gameObject);
         }
 
-        /// <summary>
-        /// Насечки такта (docs/12 §5.2): игрок не считает секунды, он смотрит, прошло ли
-        /// кольцо насечку — «за ней доложить ещё один элемент я уже не успею».
-        /// Обе ручки, срок и такт, крутятся вживую, поэтому угол пересчитывается сам.
-        /// </summary>
-        private void PlaceTactNotches()
+        private void StopAllAlarms()
         {
-            if (_tactNotches == null || _tactNotches.Length == 0)
+            if (_slotRings == null)
                 return;
-            if (Mathf.Approximately(_placedNotchCooling, _coolingSeconds) && Mathf.Approximately(_placedNotchTact, _tactSeconds))
-                return;
-            _placedNotchCooling = _coolingSeconds;
-            _placedNotchTact = _tactSeconds;
+            EnsureRingState();
 
-            for (int i = 0; i < _tactNotches.Length; i++)
-            {
-                if (_tactNotches[i] == null)
-                    continue;
-
-                float part = _tactSeconds * (i + 1) / Mathf.Max(0.01f, _coolingSeconds);
-                // столько тактов в срок не влезает — насечке на кольце места нет
-                bool fits = part < 1f;
-                if (_tactNotches[i].gameObject.activeSelf != fits)
-                    _tactNotches[i].gameObject.SetActive(fits);
-                if (!fits)
-                    continue;
-
-                // кольцо убывает от верха по часовой, значит по часовой отсчитывается и насечка
-                _tactNotches[i].localRotation = Quaternion.Euler(0f, 0f, -part * 360f);
-            }
+            for (int i = 0; i < _slotRings.Length; i++)
+                SetAlarm(i, false);
         }
 
-        private void UpdateTailMarker()
+        /// <summary>
+        /// Ленивая инициализация состояния колец — по одной ячейке на слот.
+        /// Базовый масштаб запоминается до первой тревоги: пульсация возвращает
+        /// кольцо именно в него, а не в <c>Vector3.one</c>.
+        /// </summary>
+        private void EnsureRingState()
         {
-            if (_tailMarker == null)
+            int ringCount = _slotRings != null ? _slotRings.Length : 0;
+            if (_ringTargetFills != null && _ringTargetFills.Length == ringCount)
                 return;
 
-            bool hasTail = _curretnEmptyPositions > 0;
-            if (_tailMarker.gameObject.activeSelf != hasTail)
-                _tailMarker.gameObject.SetActive(hasTail);
-            if (!hasTail)
-                return;
-
-            // Слоты раскладывает GridLayoutGroup, позиция известна только после ребилда,
-            // поэтому маркер ведём по живой позиции хвостового слота, а не по индексу.
-            Vector3 markerPosition = _tailMarker.position;
-            markerPosition.x = _flasks[_curretnEmptyPositions - 1].transform.position.x;
-            _tailMarker.position = markerPosition;
+            _ringTargetFills = new float[ringCount];
+            _ringAlarms = new bool[ringCount];
+            _ringBaseScales = new Vector3[ringCount];
+            for (int i = 0; i < ringCount; i++)
+                _ringBaseScales[i] = _slotRings[i] != null ? _slotRings[i].rectTransform.localScale : Vector3.one;
         }
 
         private void HideFlask(int index)
