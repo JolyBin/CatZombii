@@ -16,6 +16,8 @@ Wizard/Enchantress пишутся ровно по нему.
 
 ```csharp
 using Core.Battle;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 
 namespace Core.Spells
@@ -33,18 +35,73 @@ namespace Core.Spells
         private readonly int _damage;
         public IceArrow(int damage) => _damage = damage;
 
-        public override async void ApplySpell(BattleController battleController)
+        public override UniTask ApplySpell(BattleController battleController,
+                                           CancellationToken token)
         {
             if (battleController.EnemySquad.Length == 0)
-                return;                       // ← ОБЯЗАТЕЛЬНО: иначе NRE
-            battleController.HeroTarget.Health.TakeDamage(_damage);
+                return UniTask.CompletedTask;   // ← ОБЯЗАТЕЛЬНО: иначе NRE
+            UnitRuntime primaryTarget = battleController.HeroTarget;
+            if (primaryTarget == null)
+                return UniTask.CompletedTask;   // ← цель могла умереть до применения
+
+            primaryTarget.Health.TakeDamage(_damage);
+            return UniTask.CompletedTask;
         }
     }
 }
 ```
 
-**Обязательно проверяй `EnemySquad.Length == 0` перед обращением к `HeroTarget`** —
-иначе `NullReferenceException`, когда волна уже зачищена, а заклинание долетело.
+Сигнатура — `UniTask ApplySpell(BattleController, CancellationToken)`, см.
+[`BaseSpellConfig.cs`](../Assets/Scripts/Runtime/Spells/Models/BaseSpellConfig.cs).
+Мгновенное заклинание не объявляется `async`: оно делает работу и возвращает
+`UniTask.CompletedTask` — образец
+[`PowerAttackConfig.cs`](../Assets/Scripts/Runtime/Spells/Models/Warrior/PowerAttackConfig.cs).
+
+**Обязательно проверяй `EnemySquad.Length == 0` перед обращением к `HeroTarget`,
+а сам `HeroTarget` — на `null`** — иначе `NullReferenceException`, когда волна уже
+зачищена, а заклинание долетело.
+
+### 1a. Заклинание с задержкой: токен обязателен
+
+Если внутри есть `await` — тик, стан, отложенный удар, — токен надо пробросить
+в каждое ожидание и проверять между тиками. Образец —
+[`RegenirationConfig.cs`](../Assets/Scripts/Runtime/Spells/Models/Warrior/RegenirationConfig.cs):
+
+```csharp
+public override async UniTask ApplySpell(BattleController battleController,
+                                         CancellationToken token)
+{
+    int count = 0;
+    while (count < _count)
+    {
+        if (token.IsCancellationRequested)
+            return;
+        battleController.HeroHealth.Heal(_healthvalue);
+        count++;
+
+        bool isCanceled = await UniTask.Delay(_timer, cancellationToken: token)
+                                       .SuppressCancellationThrow();
+        if (isCanceled)
+            return;                     // ← бой кончился раньше заклинания
+    }
+}
+```
+
+**Зачем токен.** Он живёт ровно столько же, сколько бой: `StepsController` держит
+токен партии, `BattleController` создаёт связанный с ним токен боя и отменяет его
+при смерти героя, победе и выходе на главный экран. Всё, что заклинание делает
+после `await`, обязано прерываться по этому токену.
+
+**Что будет, если не пробросить.** Цикл переживёт бой: регенерация продолжит лечить
+героя уже на главном экране, стан позовёт `ContinueAttack()` на уничтоженной цели,
+отложенный спавн добавит юнита в мёртвый бой. Именно это чинили в `d162c4db` —
+не повторяй. В WebGL при `Exception Support = Explicitly Thrown Only` такие
+исключения ещё и глотаются молча: игрок видит странности, разработчик не видит ничего.
+
+`SuppressCancellationThrow()` возвращает флаг вместо броска `OperationCanceledException` —
+так отмена не засоряет лог. Если бросить исключение всё же нужно, оно перехватывается
+единственной точкой запуска в `BattleController` и гасится тихо; любое **другое**
+исключение уходит в `Debug.LogException`.
 
 ### 2. Ассет
 
@@ -71,7 +128,15 @@ namespace Core.Spells
 | `EnemySquad` | Копия массива живых врагов |
 | `FriendlySquad` | Копия массива живых союзников |
 | `AddEnemy(UnitConfig)` | Заспавнить врага |
-| `AddFriend(UnitConfig)` | Заспавнить союзника (⚠️ максимум 3 из-за сцены) |
+| `AddFriend(UnitConfig)` | Заспавнить союзника |
+| `BattleToken` | Токен жизни боя — тот же, что приходит в `ApplySpell` |
+
+Сколько одновременно живых юнитов помещается в бой, решает **сцена**: лимит равен
+длине массива позиций в `UIBattleWindow` (`FriendlyPositionsCount` /
+`EnemyPositionsCount`). Сегодня это 3 союзника и 4 врага; добавил позицию в сцену —
+лимит вырос сам, править код не нужно. Спавн сверх лимита не падает, а вытесняет
+уже стоящего юнита — правило вытеснения у сторон разное,
+см. [баг №16](06-known-issues.md).
 
 Через `unit.TargetController` доступны `StopAttack()` / `ContinueAttack()` /
 `SetNewTimerValue(ms)` — так сделаны стан и фазы босса.
@@ -121,9 +186,10 @@ namespace Core.Spells
 | `AttackConfig` | Ссылка на конфиг атаки |
 | `UnitPrefab` | Ссылка на префаб с `UIUnit` |
 
-> ⚠️ **`AttackCooldown = 0` сейчас роняет игру** при смерти такого юнита —
-> [баг №3](06-known-issues.md#3--unitruntimedispose--мина). Сначала почини,
-> потом делай пассивных юнитов.
+> `AttackCooldown = 0` — юнит без атаки. Раньше такой юнит ронял игру при смерти
+> ([баг №3](06-known-issues.md#3--unitruntimedispose--мина)), сейчас это починено
+> (`d162c4db`): пассивных юнитов — щит, тотем, декоративного союзника — делать можно.
+> Учти, что таймер у него скрыт, а `AttackConfig` не создаётся вовсе.
 
 ---
 
@@ -162,8 +228,11 @@ namespace Core.Spells
 2. **Не меняй `Element.ID` существующих элементов** — это ключи trie, сломаются
    все книги разом.
 3. **Каждой подписке — свой `ClearAction()`/`Exit()`.** Иначе утечка между боями.
-4. **Проверяй пустой `EnemySquad`** в заклинаниях.
-5. **Лимиты состава есть и в коде, и в сцене** — меняешь один, проверь второй.
-6. Правка `Assets/Plugins/UniTask/Editor/UniTaskTrackerTreeView.cs` — локальная
+4. **Проверяй пустой `EnemySquad`** в заклинаниях — и `HeroTarget` на `null`.
+5. **Пробрасывай `CancellationToken` в каждое ожидание.** Заклинание без токена
+   переживает бой — см. раздел «Добавить заклинание».
+6. **Лимиты состава выводятся из сцены**, а не задаются в коде: длина массивов
+   позиций в `UIFlaskWindow` и `UIBattleWindow`. Хочешь другой лимит — меняй сцену.
+7. Правка `Assets/Plugins/UniTask/Editor/UniTaskTrackerTreeView.cs` — локальная
    (совместимость с Unity 6.5). При обновлении UniTask её надо накатить заново,
    см. [08 — Инструменты](08-tooling.md).
