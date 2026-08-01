@@ -14,7 +14,7 @@ MonoBehaviour-синглтоном (см. ниже).
 ## Дерево владения
 
 ```
-GameManager  (MonoBehaviour на объекте Canvas, единственная точка входа)
+GameManager  (MonoBehaviour на объекте Main Camera, единственная точка входа)
 │  _uiService, _startBook, _currentLevels[]
 │
 └─ HomeController                          главный экран, хранит _configIndex

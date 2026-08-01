@@ -314,7 +314,7 @@ CC0 — самая безопасная лицензия из существую
 
 | Ссылка | Цена | Лицензия | Что даёт |
 |---|---|---|---|
-| [game-icons.net](https://game-icons.net/about.html) | $0 | **CC BY 3.0**: *«you can use them freely as long as you credit the original author»*, формат — *«Icons made by {author}. Available on https://game-icons.net»* | Несколько тысяч монохромных силуэтных иконок (у Lorc 1429, у Delapouite 2022). Идеальны как **основа силуэтов элементов и иконок заклинаний**: они изначально спроектированы читаемыми в один цвет |
+| [game-icons.net](https://game-icons.net/about.html) | $0 | **CC BY 3.0**: *«you can use them freely as long as you credit the original author»*, формат — *«Icons made by {author}. Available on <https://game-icons.net>»* | Несколько тысяч монохромных силуэтных иконок (у Lorc 1429, у Delapouite 2022). Идеальны как **основа силуэтов элементов и иконок заклинаний**: они изначально спроектированы читаемыми в один цвет |
 
 **Вывод для ЯИ:** можно, коммерчески, с модификацией — **но обязателен экран
 с кредитами**. Это плюс полдня работы и постоянная дисциплина. Если брать — брать

@@ -22,8 +22,8 @@ Unity 2D-игра: смесь пазла «переливание шариков
 | **Принятый дизайн игры** (ядро, прогрессия, экономика) | **[docs/10-progression-design.md](docs/10-progression-design.md)** |
 
 **Быстрые факты, которые чаще всего нужны:** проект компилируется без ошибок;
-Wizard и Enchantress — заглушки, бросают `NotImplementedException`; уровни 4–7
-собраны, но не подключены к сцене; сохранений и интеграции с Яндекс.Играми нет.
+Wizard и Enchantress — заглушки, бросают `NotImplementedException`; все 7 уровней
+собраны и подключены к сцене; сохранений и интеграции с Яндекс.Играми нет.
 
 **Важно про статус документации:** 01.08.2026 владелец снял ограничение скоупа, и ядро
 игры решено переработать — **элементы в котле стынут** (каждый живёт 15–20 с и выпадает
@@ -105,7 +105,7 @@ GameManager (MonoBehaviour, Start)
 
 ### UIService
 
-`IUIService` (`Utility/Services/UI`) — реестр окон: `Show<T>()`, `Hide<T>()`, `Get<T>()`, `HideAll()`.
+`IUIService` (`Utility/Services/UIService`) — реестр окон: `Show<T>()`, `Hide<T>()`, `Get<T>()`, `HideAll()`.
 Реализация `UIService` — синглтон-MonoBehaviour, собирающий все `UIWindow` на сцене
 через `FindObjectsByType<UIWindow>(FindObjectsInactive.Exclude)` в `InitWindows()`.
 Окна наследуются от `UIWindow` / `UISimpleWindow` / `UISimpleClosableWindow` / `UISimpleQuestionWindow`.
