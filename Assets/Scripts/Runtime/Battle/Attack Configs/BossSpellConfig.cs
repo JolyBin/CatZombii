@@ -10,19 +10,43 @@ namespace Core.Battle
         [SerializeField] private UnitConfig _simbpleZombieConfig;
         [SerializeField] private UnitConfig _ratZombieConfig;
 
-        // Наследие real-time: миллисекунды из ассета. В игру уходят уже переведёнными
-        // в такты единственным множителем конверсии (WorldClock.MILLISECONDS_PER_TACT):
-        // 10000 -> 10 ходов на волну помощников, 3500 -> 4 и 2500 -> 3 хода на удар.
-        // Ручной override в тактах есть у обычных врагов (UnitConfig); боссу он не нужен,
-        // пока его фазы разносятся тем же множителем.
+        // ТАКТЫ — ОСНОВНОЙ СПОСОБ АВТОРИНГА (правило и его обоснование — в WorldClock).
+        // docs/10 §13.7: «босс — раз в 2 хода, меняется по фазам». Фаза 1 задаётся
+        // кулдауном самого юнита (UnitConfig), фазы 2 и 3 — здесь.
+        [Header("ФАЗЫ БОССА — В ТАКТАХ МИРА. ЗАПОЛНЯТЬ ЗДЕСЬ")]
+        [Tooltip("Раз во сколько ходов игрока бьёт босс на ФАЗЕ 2 (ниже 70% HP). 0 — не задано, взять из миллисекунд ниже.")]
+        [SerializeField] private int _twoPhaseAttackCooldownTacts;
+        [Tooltip("Раз во сколько ходов игрока бьёт босс на ФАЗЕ 3 (ниже 30% HP). 0 — не задано, взять из миллисекунд ниже.")]
+        [SerializeField] private int _threePhaseAttackCooldownTacts;
+        [Tooltip("Раз во сколько СВОИХ ходов босс призывает волну помощников (фаза 3). " +
+                 "Считается по ходам босса, а не игрока: стан морозит и призыв тоже. " +
+                 "0 — не задано, взять из миллисекунд ниже.")]
+        [SerializeField] private int _spawnCooldownTacts;
+
+        // Наследие real-time: миллисекунды из ассета прототипа. Работают ТОЛЬКО пока
+        // соответствующее поле в тактах равно нулю. При MILLISECONDS_PER_TACT = 1000 дают
+        // 15000 -> 15 ходов на волну помощников, 3500 -> 4 и 2500 -> 3 хода на удар.
+        [Header("Наследие real-time — НЕ ЗАПОЛНЯТЬ (осталось от прототипа)")]
         [SerializeField] private int _spawnColldawn = 10000;
         [SerializeField] private int _twoPhaseAttackCooldown = 3500;
         [SerializeField] private int _threePhaseAttackCooldown = 2500;
 
+        /// <summary>Действующие такты фазы 2 — то, что реально уедет в бой.</summary>
+        public int TwoPhaseAttackCooldownTacts
+            => WorldClock.TactsOrLegacyMilliseconds(_twoPhaseAttackCooldownTacts, _twoPhaseAttackCooldown);
+
+        /// <summary>Действующие такты фазы 3.</summary>
+        public int ThreePhaseAttackCooldownTacts
+            => WorldClock.TactsOrLegacyMilliseconds(_threePhaseAttackCooldownTacts, _threePhaseAttackCooldown);
+
+        /// <summary>Действующие такты между волнами помощников.</summary>
+        public int SpawnCooldownTacts
+            => WorldClock.TactsOrLegacyMilliseconds(_spawnCooldownTacts, _spawnColldawn);
+
         public override BaseUnitSpell GetUnitSpell() => new BossSpell(_damage, _simbpleZombieConfig, _ratZombieConfig,
-                                                                      WorldClock.TactsFromMilliseconds(_spawnColldawn),
-                                                                      WorldClock.TactsFromMilliseconds(_twoPhaseAttackCooldown),
-                                                                      WorldClock.TactsFromMilliseconds(_threePhaseAttackCooldown));
+                                                                      SpawnCooldownTacts,
+                                                                      TwoPhaseAttackCooldownTacts,
+                                                                      ThreePhaseAttackCooldownTacts);
     }
 
     /// <summary>

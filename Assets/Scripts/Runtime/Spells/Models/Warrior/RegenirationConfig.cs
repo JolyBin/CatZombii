@@ -12,16 +12,33 @@ namespace Core.Spells
     {
         [SerializeField] private int _healthvalue = 10;
 
-        /// <summary>
-        /// Наследие real-time: пауза между тиками лечения в миллисекундах, как в ассете.
-        /// В игру уходит переведённой в такты единственным множителем конверсии
-        /// (<see cref="WorldClock.MILLISECONDS_PER_TACT"/>).
-        /// </summary>
-        [SerializeField] private int _timer = 2000;
+        [Tooltip("Сколько ТИКОВ лечения. 1 — мгновенное лечение без длительности (docs/10 §14.1).")]
         [SerializeField] private int _count = 3;
 
+        // ТАКТЫ — ОСНОВНОЙ СПОСОБ АВТОРИНГА (правило и обоснование — в WorldClock).
+        [Header("ПАУЗА МЕЖДУ ТИКАМИ — В ТАКТАХ МИРА. ЗАПОЛНЯТЬ ЗДЕСЬ")]
+        [Tooltip("Сколько ХОДОВ ИГРОКА проходит между тиками лечения. 1 — каждый ход.\n" +
+                 "0 — не задано, значение выведется из миллисекунд ниже.\n" +
+                 "При _count = 1 не используется вовсе: лечение мгновенное.")]
+        [SerializeField] private int _intervalTacts;
+
+        /// <summary>
+        /// Наследие real-time: пауза между тиками лечения в МИЛЛИСЕКУНДАХ, как в ассетах
+        /// прототипа. Работает только пока такты выше равны нулю.
+        /// </summary>
+        [Header("Наследие real-time — НЕ ЗАПОЛНЯТЬ (осталось от прототипа)")]
+        [Tooltip("Миллисекунды старого real-time-боя. Делятся на WorldClock.MILLISECONDS_PER_TACT. " +
+                 "Новые ассеты заполняют ТАКТЫ, а не это поле.")]
+        [SerializeField] private int _timer = 2000;
+
         /// <summary>Пауза между тиками в ТАКТАХ мира — сколько действий игрока между лечениями.</summary>
-        public int IntervalTacts => WorldClock.TactsFromMilliseconds(_timer);
+        public int IntervalTacts => WorldClock.TactsOrLegacyMilliseconds(_intervalTacts, _timer);
+
+        /// <summary>Откуда взялось действующее значение — для редакторной подсказки. Игре не нужно.</summary>
+        public bool IsIntervalAuthoredInTacts => _intervalTacts > 0;
+
+        /// <summary>Сколько тиков лечения — для редакторной подсказки.</summary>
+        public int HealCount => _count;
 
         // суммарное лечение: игроку важен итог, а не размер одного тика
         public override int PreviewValue => _healthvalue * _count;

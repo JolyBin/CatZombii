@@ -54,7 +54,9 @@ namespace Core.Flask
             int flaskMaxSize = uIFlasks.FirstOrDefault()?.Capacity ?? 0;
             InitializeFlasks(_uniqElements, flasks, uIFlasks, flaskMaxSize);
 
-            TactMeter.BeginBattle();                              // TactMeter (временный замер, Шаг 0)
+            // _uniqElements — пул генератора, его длина и есть E из docs/10 §13.6:
+            // без E замер «переливов на схлопывание» нечитаем, три прогона не различить
+            TactMeter.BeginBattle(_uniqElements);                 // TactMeter (временный замер, Шаг 0)
             OnFlaskFull += _ => TactMeter.RegisterCollapse();     // TactMeter (временный замер, Шаг 0)
             MoveCommand += TactMeter.RegisterMove;                // TactMeter (временный замер, Шаг 0)
         }

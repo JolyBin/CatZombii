@@ -11,16 +11,32 @@ namespace Core.Spells
     {
         [field: SerializeField] public int Damage { get; private set; }
 
+        // ТАКТЫ — ОСНОВНОЙ СПОСОБ АВТОРИНГА (правило и обоснование — в WorldClock).
+        // Это поле особенно опасно было оставить в секундах: docs/10 §14.2 задаёт
+        // «StunTimer: 1 / 2 / 3» ИМЕННО КАК ЧИСЛО ПРОПУЩЕННЫХ ХОДОВ («враг пропускает
+        // ход»), а в секундах это же число совпадёт с задуманным только по случайности —
+        // ровно пока MILLISECONDS_PER_TACT равен 1000. После замера «переливов
+        // на схлопывание» множитель изменится, и «стан 3» тихо станет станом на 1 ход.
+        [Header("СТАН — В ТАКТАХ МИРА. ЗАПОЛНЯТЬ ЗДЕСЬ")]
+        [Tooltip("СКОЛЬКО СВОИХ ХОДОВ цель пропустит. 1 — пропускает один удар, 3 — три.\n" +
+                 "0 — не задано, значение выведется из секунд ниже.")]
+        [SerializeField] private int _stunTacts;
+
         /// <summary>
-        /// Наследие real-time: длительность стана в секундах, как записано в ассете.
-        /// В пошаговом мире стан считается в ХОДАХ — иначе он таял бы, пока игрок думает,
-        /// и снимался бы бесплатно. Перевод идёт единственным множителем конверсии
-        /// (<see cref="WorldClock.MILLISECONDS_PER_TACT"/>), см. <see cref="StunTacts"/>.
+        /// Наследие real-time: длительность стана в СЕКУНДАХ, как записано в ассетах
+        /// прототипа. Работает только пока такты выше равны нулю.
         /// </summary>
+        // field: обязателен — заголовок должен сесть на backing-поле, инспектор рисует поля
+        [field: Header("Наследие real-time — НЕ ЗАПОЛНЯТЬ (осталось от прототипа)")]
+        [field: Tooltip("Секунды старого real-time-боя. Переводятся в такты как секунды*1000 / " +
+                        "WorldClock.MILLISECONDS_PER_TACT. Новые ассеты заполняют ТАКТЫ, а не это поле.")]
         [field: SerializeField] public int StunTimer { get; private set; }
 
-        /// <summary>Стан в тактах мира — сколько своих ходов цель пропустит.</summary>
-        public int StunTacts => WorldClock.TactsFromSeconds(StunTimer);
+        /// <summary>Стан в тактах мира — сколько своих ходов цель пропустит. Это и читает игра.</summary>
+        public int StunTacts => WorldClock.TactsOrLegacySeconds(_stunTacts, StunTimer);
+
+        /// <summary>Откуда взялось действующее значение — для редакторной подсказки. Игре не нужно.</summary>
+        public bool IsStunAuthoredInTacts => _stunTacts > 0;
 
         public override int PreviewValue => Damage;
 

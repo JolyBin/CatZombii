@@ -17,16 +17,41 @@
 // Не каждый перелив ведёт к схлопыванию, и часть переливов холостая (игрок раскладывает),
 // поэтому по переливам считается и среднее, и медиана — распределение перекошено.
 //
-// КАК УДАЛИТЬ ПОСЛЕ ЗАМЕРА (2 шага, ничего больше не затронуто):
+// ═══ ЧИСЛО СТИХИЙ E — ЧАСТЬ РЕЗУЛЬТАТА, А НЕ ПОДПИСЬ ═══
+//
+// docs/10 §13.6 требует замерить «переливов на схлопывание» ОТДЕЛЬНО для E = 2, 3, 4:
+// чем больше стихий сыплется в колбы, тем дороже собрать четыре одинаковых. Замер без
+// указанного E бесполезен — три прогона не отличить друг от друга задним числом.
+// Поэтому E печатается в шапке партии и в её итоге, а сессионная статистика копится
+// ОТДЕЛЬНЫМИ вёдрами по E и печатается таблицей.
+//
+// ⚠️ Про «за одну сессию все три E»: так НЕ получится, и это не дефект инструмента.
+// Книга берётся из сейва один раз, на старте (GameManager.Boot), поэтому сменить E
+// можно только выйдя из Play Mode, а выход сбрасывает статику (ResetStatics). Значит
+// в таблице каждой сессии будет ровно одна заполненная строка, а остальные E честно
+// напишут «НЕ ЗАМЕРЕНО». Три числа собираются из трёх прогонов — таблица нужна
+// не для их сложения, а чтобы ни один лог нельзя было прочитать без указанного E.
+//
+// Откуда берётся E: Book.UniqElements (собирается Book.OnValidate из комбинаций) —
+// именно этот массив StepsController отдаёт в FlaskController как пул генератора.
+//
+// КАК УДАЛИТЬ ПОСЛЕ ЗАМЕРА (4 шага, ничего больше не затронуто):
 //   1. Удалить этот файл (и .meta).
 //   2. Убрать в Assets/Scripts/Runtime/Flask/FlaskController.cs строки, помеченные
 //      комментарием "TactMeter (временный замер, Шаг 0)" — их четыре плюс один using.
+//   3. Удалить папку Assets/Resources/Spells/Books/TactMeter Books/ — временные книги
+//      под E=3 и E=4. На них никто не ссылается, кроме сейва (поле HeroId), а он
+//      откатывается на героя по умолчанию сам, если книги не нашлось.
+//   4. Удалить Assets/Scripts/Editor/Utility/TactMeterSetupMenu.cs — меню выбора
+//      книги замера. Перед удалением стоит вернуть боевую книгу пунктом «E=2 (Warrior)»,
+//      иначе в сейве останется висеть идентификатор несуществующего героя.
 //
 // Это не фича: ни одного serialized-поля, ни одного объекта в сцене, ни одной
 // зависимости на инструмент со стороны игровой логики. Точки входа — существующие
 // события FlaskController.OnFlaskFull (схлопывание) и FlaskController.MoveCommand (перелив).
 // =====================================================================================
 
+using Core.Flask.Models;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
@@ -89,6 +114,15 @@ namespace Utility.Diagnostics
         private static string _levelLabel = "?";
         private static Watcher _watcher;
 
+        // --- Стихии (E) -----------------------------------------------------------------
+        // _elementCount — то самое E из docs/10 §13.6, с которым игралась ЭТА партия.
+        // _sessionSegmentsByE — те же отрезки, но разложенные по вёдрам E: без этого
+        // сессия, в которой сыграли и E=2, и E=3, дала бы одно усреднённое число ни о чём.
+        private static int _elementCount;
+        private static string _elementsLabel = "?";
+        private static readonly Dictionary<int, List<int>> _sessionSegmentsByE = new Dictionary<int, List<int>>(4);
+        private static readonly Dictionary<int, string> _elementsLabelByE = new Dictionary<int, string>(4);
+
         // Статика переживает вход в Play Mode, если в проекте выключен Domain Reload.
         // Сбрасываем явно, чтобы замер всегда начинался с чистого листа.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -109,10 +143,21 @@ namespace Utility.Diagnostics
             _sessionSegments.Clear();
             _levelLabel = "?";
             _watcher = null;
+            _elementCount = 0;
+            _elementsLabel = "?";
+            _sessionSegmentsByE.Clear();
+            _elementsLabelByE.Clear();
         }
 
-        /// <summary>Вызывается из FlaskController.Init() — момент старта партии (боя).</summary>
-        public static void BeginBattle()
+        /// <summary>
+        /// Вызывается из FlaskController.Init() — момент старта партии (боя).
+        /// </summary>
+        /// <param name="uniqElements">
+        /// Пул стихий партии — ровно тот массив, из которого <c>ElementsGenerator</c> сыплет
+        /// шарики в колбы. Его длина и есть E из docs/10 §13.6, ради которого весь замер:
+        /// «переливов на схлопывание» осмысленно ТОЛЬКО вместе с E.
+        /// </param>
+        public static void BeginBattle(Element[] uniqElements)
         {
             if (_battleRunning)
                 EndBattle(); // подстраховка: предыдущая партия не закрылась
@@ -130,9 +175,13 @@ namespace Utility.Diagnostics
             _causingMovePending = false;
             _outcome = null;
             _levelLabel = ReadCurrentLevelLabel();
+            _elementCount = uniqElements == null ? 0 : uniqElements.Length;
+            _elementsLabel = DescribeElements(uniqElements);
+            if (_elementCount > 0)
+                _elementsLabelByE[_elementCount] = _elementsLabel;
 
-            Debug.Log(TAG + $"=== ПАРТИЯ #{_partyNumber} НАЧАЛАСЬ (уровень {_levelLabel}). " +
-                            "Замер такта и переливов пошёл. Просто играй. ===");
+            Debug.Log(TAG + $"=== ПАРТИЯ #{_partyNumber} НАЧАЛАСЬ. СТИХИЙ E = {_elementCount} ({_elementsLabel}), " +
+                            $"уровень {_levelLabel}. Замер такта и переливов пошёл. Просто играй. ===");
         }
 
         /// <summary>
@@ -212,13 +261,23 @@ namespace Utility.Diagnostics
             _sessionMoves += _moves;
 
             int n = _intervals.Count;
+            List<int> bucket = null;
+            if (_elementCount > 0 && !_sessionSegmentsByE.TryGetValue(_elementCount, out bucket))
+            {
+                bucket = new List<int>(64);
+                _sessionSegmentsByE.Add(_elementCount, bucket);
+            }
             for (int i = 1; i < _movesPerCollapse.Count; i++)
+            {
                 _sessionSegments.Add(_movesPerCollapse[i]);
+                bucket?.Add(_movesPerCollapse[i]);
+            }
 
             string outcome = string.IsNullOrEmpty(_outcome) ? "ВЫХОД (кнопка домой / не доиграно)" : _outcome;
 
             var sb = new StringBuilder();
-            sb.AppendLine(TAG + $"===== ИТОГ ПАРТИИ #{_partyNumber} (уровень {_levelLabel}) =====");
+            sb.AppendLine(TAG + $"===== ИТОГ ПАРТИИ #{_partyNumber}: E = {_elementCount} СТИХИИ, уровень {_levelLabel} =====");
+            sb.AppendLine($"Стихии партии: {_elementsLabel}");
             sb.AppendLine($"Исход: {outcome}");
             sb.AppendLine($"Длина партии: {F(party)} с ({Clock(party)}) | гейт «партия ≤ 5 мин»: " +
                           (party <= PARTY_GATE_SECONDS ? "ПРОЙДЕН" : "ПРОВАЛЕН"));
@@ -246,8 +305,8 @@ namespace Utility.Diagnostics
                 sb.AppendLine($"ПЕРЕЛИВОВ НА СХЛОПЫВАНИЕ, среднее по всем: {F(MeanI(_movesPerCollapse, 0))}");
                 if (n > 1)
                 {
-                    sb.AppendLine($"ПЕРЕЛИВОВ НА СХЛОПЫВАНИЕ, без первого: {F(MeanI(_movesPerCollapse, 1))}   [ЭТО ЧИСЛО НУЖНО ДЛЯ ВЁРСТКИ ВОЛН — ТАКТ МИРА В ПЕРЕЛИВАХ]");
-                    sb.AppendLine($"МЕДИАНА переливов на схлопывание, без первого: {F(MedianI(_movesPerCollapse, 1))}   [ЭТО ЧИСЛО НУЖНО ДЛЯ ВЁРСТКИ ВОЛН — ТАКТ МИРА В ПЕРЕЛИВАХ]");
+                    sb.AppendLine($"ПЕРЕЛИВОВ НА СХЛОПЫВАНИЕ при E={_elementCount}, без первого: {F(MeanI(_movesPerCollapse, 1))}   [ЭТО ЧИСЛО НУЖНО ДЛЯ ВЁРСТКИ ВОЛН — ТАКТ МИРА В ПЕРЕЛИВАХ]");
+                    sb.AppendLine($"МЕДИАНА переливов на схлопывание при E={_elementCount}, без первого: {F(MedianI(_movesPerCollapse, 1))}   [ЭТО ЧИСЛО НУЖНО ДЛЯ ВЁРСТКИ ВОЛН — ТАКТ МИРА В ПЕРЕЛИВАХ]");
                 }
                 sb.AppendLine($"Медиана переливов по всем: {F(MedianI(_movesPerCollapse, 0))}");
                 sb.AppendLine($"Мин / макс переливов на схлопывание: {MinI(_movesPerCollapse)} / {MaxI(_movesPerCollapse)}");
@@ -261,10 +320,63 @@ namespace Utility.Diagnostics
             if (_sessionSegments.Count > 0)
                 sb.AppendLine($"Сессия, переливов на схлопывание (без первых; схлопываний: {_sessionSegments.Count}): " +
                               $"среднее {F(MeanI(_sessionSegments, 0))}, медиана {F(MedianI(_sessionSegments, 0))}   " +
-                              "[ИТОГОВАЯ КОНВЕРСИЯ ЗА СЕССИЮ]");
+                              "[ВСЕ E ВМЕШАННЫЕ — смотри таблицу ниже, а не эту строку]");
+
+            AppendByElementCount(sb);
             sb.Append(TAG + "=========================================");
 
             Debug.Log(sb.ToString());
+        }
+
+        /// <summary>
+        /// ГЛАВНАЯ ТАБЛИЦА ЗАМЕРА: «переливов на схлопывание» по числу стихий E.
+        /// Ровно то, что просит docs/10 §13.6. Печатается в конце КАЖДОЙ партии, поэтому
+        /// владельцу достаточно скопировать ПОСЛЕДНИЙ такой блок за сессию.
+        /// В одной сессии заполнена одна строка (почему — в шапке файла); остальные E
+        /// пишут «НЕ ЗАМЕРЕНО», чтобы лог нельзя было принять за полный ответ.
+        /// </summary>
+        private static void AppendByElementCount(StringBuilder sb)
+        {
+            if (_sessionSegmentsByE.Count == 0)
+                return;
+
+            sb.AppendLine("--- ГЛАВНОЕ: ПЕРЕЛИВОВ НА СХЛОПЫВАНИЕ ПО ЧИСЛУ СТИХИЙ E (docs/10 §13.6) ---");
+
+            var elementCounts = new List<int>(_sessionSegmentsByE.Keys);
+            elementCounts.Sort();
+
+            foreach (int e in elementCounts)
+            {
+                List<int> segments = _sessionSegmentsByE[e];
+                string label = _elementsLabelByE.TryGetValue(e, out string named) ? named : "?";
+                if (segments.Count == 0)
+                {
+                    sb.AppendLine($"E = {e} ({label}): схлопываний, кроме первых в партии, не было — числа нет.");
+                    continue;
+                }
+
+                sb.AppendLine($"E = {e} ({label}): среднее {F(MeanI(segments, 0))}, медиана {F(MedianI(segments, 0))}, " +
+                              $"мин/макс {MinI(segments)}/{MaxI(segments)}, схлопываний {segments.Count}");
+            }
+
+            for (int e = 2; e <= 4; e++)
+                if (!_sessionSegmentsByE.ContainsKey(e))
+                    sb.AppendLine($"E = {e}: НЕ ЗАМЕРЕНО в этой сессии.");
+        }
+
+        /// <summary>Список стихий одной строкой — чтобы по логу было видно, какой книгой играли.</summary>
+        private static string DescribeElements(Element[] elements)
+        {
+            if (elements == null || elements.Length == 0)
+                return "стихий нет";
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < elements.Length; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append(elements[i] == null ? "null" : elements[i].name);
+            }
+            return sb.ToString();
         }
 
         internal static void NoteOutcome(string outcome)
