@@ -27,7 +27,22 @@ namespace Core.Flask.UI
         [SerializeField] private Image[] _waterImages;
 
 
-        private Vector3 _basePosition;
+        /// <summary>
+        /// Место колбы на полке — в КООРДИНАТАХ РАСКЛАДКИ, а не в мировых, и снятое
+        /// В МОМЕНТ ПОДЪЁМА, а не при инициализации.
+        ///
+        /// Раньше здесь лежал <c>transform.position</c>, взятый в <c>InitializeFlask()</c>.
+        /// Это было неверно дважды. Во-первых, по времени: <c>InitializeFlask</c> зовут
+        /// сразу после того, как <c>UIFlaskWindow.GetUIFlasks</c> воткнул колбу в слот,
+        /// то есть ДО того, как <c>HorizontalLayoutGroup</c> разложит слоты, — колба
+        /// возвращалась не на своё место, а туда, где она была полкадра.
+        /// Во-вторых, по системе координат: мировая позиция зависит от размера канваса,
+        /// а он меняется от смены ориентации и от вылезающей адресной строки браузера.
+        /// </summary>
+        private Vector2 _baseAnchoredPosition;
+
+        /// <summary>Колба поднята. Без флага повторный <c>SelectElement</c> поднял бы её ещё раз.</summary>
+        private bool _isSelected;
 
         private Flask _flask;
         private readonly List<Element> _content = new();
@@ -38,7 +53,9 @@ namespace Core.Flask.UI
             Redraw();
             _button.onClick.RemoveAllListeners();
             _button.onClick.AddListener(() => ButtonClickCommand?.Invoke());
-            _basePosition = transform.position;
+            // колба могла прийти из пула поднятой — опускаем до того, как её увидят
+            _isSelected = false;
+            RectTransform.anchoredPosition = Vector2.zero;
         }
 
         /// <summary>
@@ -73,12 +90,20 @@ namespace Core.Flask.UI
 
         public void SelectElement()
         {
+            if (_isSelected)
+                return;
+            _isSelected = true;
+            // базу читаем здесь: к этому кадру раскладка полки уже отработала
+            _baseAnchoredPosition = RectTransform.anchoredPosition;
             RectTransform.position = _selectedPosition.position;
         }
 
         public void DeselectElement()
         {
-            RectTransform.position = _basePosition;
+            if (!_isSelected)
+                return;
+            _isSelected = false;
+            RectTransform.anchoredPosition = _baseAnchoredPosition;
         }
 
         public void Dispose()
@@ -89,6 +114,7 @@ namespace Core.Flask.UI
         public void ClearAction()
         {
             ButtonClickCommand = null;
+            DeselectElement();
             Unbind();
         }
 
