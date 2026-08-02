@@ -84,11 +84,17 @@ namespace Core.Spells
         /// </summary>
         private bool _isInputLocked;
 
-        public TableController(Book currentBook, FlaskController flaskController, IUIService uiService)
+        /// <summary>
+        /// Рецепты приходят СПИСКОМ, а не книгой: источник — экипированная колода
+        /// (docs/10 §13.1), и котёл не должен знать, из чего она собрана. Книга здесь
+        /// была лишним звеном и раньше — <see cref="Table"/> и так строился
+        /// из <c>Combination[]</c>.
+        /// </summary>
+        public TableController(Combination[] combinations, FlaskController flaskController, IUIService uiService)
         {
             _uiService = uiService;
             _flaskController = flaskController;
-            _table = new(currentBook.Combinations);
+            _table = new(combinations);
             _currentElements = new ();
             _tailRemainingTacts = 0;
             _window = _uiService.Show<UITableWindow>();

@@ -1,9 +1,8 @@
-﻿using Core.Battle;
+using Core.Battle;
 using Core.Spells;
 using Core.Steps;
 using Meta.UI;
 using UnityEngine;
-using Utility.Services.Saves;
 using Utility.Services.UI;
 
 namespace Meta
@@ -18,84 +17,131 @@ namespace Meta
         private HeroController _heroController;
 
         /// <summary>
-        /// Текущий уровень. Больше НЕ источник истины: истина —
-        /// <c>Saves.Profile.LevelIndex</c>, а это поле её рабочая копия на время сессии.
-        /// Раньше здесь и жил весь прогресс игры — блокер №1 роадмапа (docs/07):
-        /// перезагрузил вкладку, начал с первого уровня.
+        /// Мета целиком: карта, кошелёк, покупки, колоды. Создаётся здесь, потому что
+        /// здесь же начинается и кончается сессия главного экрана.
         /// </summary>
-        private int _configIndex;
+        private readonly MetaController _meta;
+
+        /// <summary>
+        /// Узел, с которого игрок сейчас пойдёт в бой. Это НЕ прогресс — прогресс живёт
+        /// в <c>Saves.Profile.ClearedNodes</c> и читается через <see cref="MetaController.Map"/>.
+        ///
+        /// Раньше на этом месте был <c>_configIndex</c>, и он был сразу и выбором,
+        /// и прогрессом, и тупиком: рос на победе, упирался в последний уровень
+        /// и никогда не сбрасывался (docs/10 §13.4). Теперь узлы перепроходимы,
+        /// и «какой узел выбран» — это состояние ЭКРАНА, живущее до следующего клика.
+        /// </summary>
+        private int _selectedNode;
 
         public HomeController(IUIService uiService, Book startBook, BattleConfig[] battleConfigs)
         {
             _uiService = uiService;
             _battleConfigs = battleConfigs;
-            _heroController = new HeroController(_uiService, startBook);
-            _configIndex = ClampToLevels(Saves.Profile.LevelIndex);
-            // Починку возвращаем в профиль, иначе она живёт только до конца сессии
-            // и «уровень 1000» всплывал бы снова при каждом запуске. Записи на диск
-            // здесь НЕТ намеренно: старт игры — не точка сохранения, а исправленное
-            // значение уедет на диск при первом же настоящем сохранении.
-            Saves.Profile.LevelIndex = _configIndex;
+            _meta = new MetaController(startBook, battleConfigs);
+            _heroController = new HeroController(_uiService, _meta);
+            _selectedNode = _meta.Map.NextNode;
             OpenWindow();
         }
+
+        /// <summary>Мета для экранов карты, колоды и лавки. Единственный вход к прогрессу.</summary>
+        public MetaController Meta => _meta;
+
+        /// <summary>Узел, выбранный на карте. Пока экрана карты нет — первый непройденный.</summary>
+        public int SelectedNode => _selectedNode;
 
         public void OpenWindow()
         {
             _homeWindow = _uiService.Show<UIHomeWindow>();
-            _homeWindow.SetLevelValue(_configIndex + 1);
+            _homeWindow.SetLevelValue(_selectedNode + 1);
             _homeWindow.OnClickPlayButton += StartGame;
             _homeWindow.OnClickCharactersButton += OpenHeroesWindow;
         }
 
         /// <summary>
-        /// ТОЧКА СОХРАНЕНИЯ №1 — победа. Зовётся из <c>StepsController.ShowWinWindow</c>
-        /// по кнопке «продолжить», то есть ровно один раз на пройденный уровень.
-        ///
-        /// Почему именно здесь, а не «на каждый чих»: это ЕДИНСТВЕННОЕ место, где меняется
-        /// прогресс уровней, и оно же — то место, потерю которого игрок заметит.
-        /// В WebGL запись идёт в IndexedDB и стоит заметно дороже присваивания, поэтому
-        /// сохраняться на каждом такте или на каждой волне было бы платой без покупки.
+        /// ВЫБОР УЗЛА НА КАРТЕ. Точка входа для экрана карты (docs/10 §13.4): узлы
+        /// перепроходимы, поэтому выбрать можно любой открытый, а не только следующий.
         /// </summary>
-        public void AddConfigIndex()
+        /// <returns><c>false</c> — узел закрыт или его нет; экран обязан оставить выбор как был.</returns>
+        public bool TrySelectNode(int node)
         {
-            if (_configIndex >= _battleConfigs.Length - 1)
-                return;
+            if (!_meta.Map.IsUnlocked(node))
+                return false;
 
-            _configIndex++;
-            Saves.Profile.LevelIndex = _configIndex;
-            Saves.RequestSave($"уровень {_configIndex} пройден");
+            _selectedNode = node;
+            _homeWindow?.SetLevelValue(_selectedNode + 1);
+            return true;
         }
+
+        /// <summary>Выбрать узел и сразу пойти в бой — то, что делает клик по узлу карты.</summary>
+        public bool TryStartNode(int node)
+        {
+            if (!TrySelectNode(node))
+                return false;
+
+            StartGame();
+            return true;
+        }
+
+        /// <summary>
+        /// ПОБЕДА НА УЗЛЕ. Зовётся из <c>StepsController.ShowWinWindow</c> по кнопке
+        /// «продолжить», то есть ровно один раз на выигранный бой.
+        ///
+        /// Что изменилось против прежнего <c>AddConfigIndex</c>: прогресс больше не
+        /// «следующий уровень», а «узел пройден». Перепрохождение уже пройденного узла
+        /// прогресс не двигает и записи на диск не стоит — но событие о победе всё равно
+        /// случается, потому что награда за перепрохождение есть (40% по §15.3).
+        ///
+        /// ⚠️ ЭТО ЕДИНСТВЕННОЕ МЕСТО, ГДЕ НАЧИСЛЯЕТСЯ НАГРАДА ЗА БОЙ. Кнопка «×2 за
+        /// рекламу» (docs/10 §10) не должна считать награду заново — ей достаточно
+        /// добавить столько же ещё раз: <c>Meta.AddCoins(reward, "×2 за рекламу")</c>.
+        /// Второй счётчик награды разъедется с первым при первой же правке §15.3.
+        /// </summary>
+        /// <returns>Сколько клубков начислено за бой — это же число показывает экран победы.</returns>
+        public int RegisterNodeCleared()
+        {
+            int node = _selectedNode;
+            _meta.Map.TryRegisterClear(node, out bool firstClear);
+
+            int reward = MetaEconomy.NodeReward(_meta.Map.ChapterOf(node), _meta.Map.IsBoss(node), firstClear);
+            _meta.AddCoins(reward, $"награда за узел {node + 1}");
+
+            // Экран карты появится позже; пока сохраняем прежнее поведение главного
+            // экрана — после победы он предлагает следующий узел.
+            _selectedNode = _meta.Map.NextNode;
+            return reward;
+        }
+
+        /// <summary>
+        /// СВЯЗАТЬ ЭКРАНЫ МЕТЫ С ДАННЫМИ. Одна точка входа для карты, колоды и лавки:
+        /// возвращённый <see cref="MetaScreensBinding"/> уже умеет собирать все три
+        /// модели и применять клики по законам docs/10 §13.
+        ///
+        /// Освобождение — на вызывающем: <c>binding.ClearAction()</c> вместе с
+        /// <c>MetaScreensController.Exit()</c>.
+        /// </summary>
+        public MetaScreensBinding CreateScreensBinding() => new MetaScreensBinding(this);
 
         private void StartGame()
         {
+            BattleConfig config = _meta.Map.ConfigOf(_selectedNode);
+            if (config == null)
+            {
+                Debug.LogError($"[Мета] Узла {_selectedNode + 1} нет в сборке — играть нечем.");
+                return;
+            }
+
             _homeWindow.Hide();
-            _stepsController = new StepsController(_uiService, _heroController.SeveBook, this, _battleConfigs[_configIndex]);
+
+            // ЗАКОН §13.1: в бой едет КОЛОДА, а не книга. Отсюда «каждое новое заклинание
+            // делает пазл труднее» — пул стихий колб выводится из экипированного набора.
+            SpellDeck deck = _meta.CurrentLoadout.BuildDeck();
+            _stepsController = new StepsController(_uiService, deck, this, config);
             _stepsController.Init();
         }
 
         private void OpenHeroesWindow()
         {
             _heroController.OpenWindow();
-        }
-
-        /// <summary>
-        /// Сейв — ВНЕШНИЕ данные, и уровней в сборке может стать меньше, чем было
-        /// у игрока (вырезали уровень, откатили релиз). Индекс за границей массива —
-        /// это <c>IndexOutOfRangeException</c> на кнопке «играть», то есть игра,
-        /// которая не запускается и не чинится ничем, кроме очистки данных сайта.
-        /// </summary>
-        private int ClampToLevels(int levelIndex)
-        {
-            if (_battleConfigs == null || _battleConfigs.Length == 0)
-                return 0;
-
-            int clamped = Mathf.Clamp(levelIndex, 0, _battleConfigs.Length - 1);
-            if (clamped != levelIndex)
-            {
-                Debug.LogWarning($"[Saves] В сейве уровень {levelIndex + 1}, а в сборке их " +
-                                 $"{_battleConfigs.Length}. Ставим {clamped + 1}.");
-            }
-            return clamped;
         }
     }
 }

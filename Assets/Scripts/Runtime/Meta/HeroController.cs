@@ -1,7 +1,5 @@
-﻿using Core.Spells;
+using Core.Spells;
 using Meta.UI;
-using UnityEngine;
-using Utility.Services.Saves;
 using Utility.Services.UI;
 
 
@@ -9,25 +7,33 @@ namespace Meta
 {
     public class HeroController
     {
-        public Book SeveBook => _saveBook;
+        /// <summary>
+        /// Книга выбранного героя. Осталась ради вызывающих; истина — <c>MetaController</c>,
+        /// у которого она же и лежит в <c>Saves.Profile.HeroId</c>.
+        /// </summary>
+        public Book SeveBook => _meta.CurrentBook;
 
         private IUIService  _uiService;
         private UIHeroesWindow _uiHeroesWindow;
         private Book _currentSelectedBook;
 
-        /// <summary>
-        /// Выбранный герой. Больше НЕ источник истины: истина — <c>Saves.Profile.HeroId</c>,
-        /// а это поле её рабочая копия на время сессии (ассет по идентификатору из сейва).
-        /// </summary>
-        private Book _saveBook;
+        private readonly MetaController _meta;
         private EquipmentController _equipmentController;
 
-        public HeroController(IUIService uiService, Book startBook)
+        public HeroController(IUIService uiService, MetaController meta)
         {
             _uiService = uiService;
-            _saveBook = ResolveSavedBook(startBook);
-            _equipmentController = new(uiService);
+            _meta = meta;
+            _equipmentController = new(uiService, meta);
         }
+
+        /// <summary>Мета — для окна героев: какие книги открыты, какая выбрана (docs/10 §13.4).</summary>
+        public MetaController Meta => _meta;
+
+        /// <summary>
+        /// Колода героя, чью карточку сейчас смотрят. Точка входа окна экипировки.
+        /// </summary>
+        public HeroLoadout LoadoutOf(Book book) => _meta.LoadoutOf(book);
 
         public void OpenWindow()
         {
@@ -35,7 +41,7 @@ namespace Meta
             _currentSelectedBook = _uiHeroesWindow.UIHeroList[0].HeroBook;
             foreach(UIHero uiHero in _uiHeroesWindow.UIHeroList)
             {
-                if (_saveBook == uiHero.HeroBook)
+                if (_meta.CurrentBook == uiHero.HeroBook)
                 {
                     _currentSelectedBook = uiHero.HeroBook;
                     uiHero.Init(true);
@@ -62,39 +68,13 @@ namespace Meta
         /// тумблера значит платить за то, чего игрок не просил.
         ///
         /// Повторное нажатие ничего не стоит: если герой не менялся, записи не будет.
+        /// Закрытого героя выбрать нельзя — герои открываются прогрессом (docs/10 §13.4),
+        /// и окно обязано показывать это ДО клика, а не отказом после.
         /// </summary>
         private void SaveSelectedHero()
         {
-            if (_saveBook != _currentSelectedBook)
-            {
-                _saveBook = _currentSelectedBook;
-                Saves.Profile.HeroId = _saveBook == null ? string.Empty : _saveBook.HeroId;
-                Saves.RequestSave($"выбран герой «{Saves.Profile.HeroId}»");
-            }
+            _meta.TrySelectHero(_currentSelectedBook);
             HideWindow();
-        }
-
-        /// <summary>
-        /// Достать из сейва героя, которым играли в прошлый раз.
-        ///
-        /// Любой сбой здесь — НЕ повод остаться без книги: без книги не собирается ни одна
-        /// комбинация, то есть игра запустится, но играть в неё будет нельзя. Поэтому все
-        /// три плохих случая (в сейве пусто, ассет переименовали, ассет удалили) ведут
-        /// в одно место — герой по умолчанию из <c>GameManager._startBook</c>.
-        /// </summary>
-        private Book ResolveSavedBook(Book fallbackBook)
-        {
-            string savedHeroId = Saves.Profile.HeroId;
-            if (string.IsNullOrEmpty(savedHeroId))
-                return fallbackBook;
-
-            Book savedBook = BookCatalog.Find(savedHeroId);
-            if (savedBook != null)
-                return savedBook;
-
-            Debug.LogWarning($"[Saves] Героя «{savedHeroId}» из сейва нет среди книг " +
-                             $"(Resources/{BookCatalog.RESOURCES_PATH}). Берём героя по умолчанию.");
-            return fallbackBook;
         }
 
         private void SelectedHero(bool value, UIHero uiHero)

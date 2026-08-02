@@ -68,18 +68,31 @@ namespace Core.Spells
 
         [SerializeField] private Element[] _uniqElements;
 
+        [Tooltip("ГЛАВА, боссом которой открывается герой (docs/10 §13.4: боссы узлов 5 и 10). " +
+                 "0 — герой доступен с самого начала. Валютой герои не покупаются никогда.")]
+        [SerializeField] private int _unlockChapter;
+
+        /// <summary>
+        /// КОГДА ГЕРОЙ ОТКРЫВАЕТСЯ. docs/10 §13.4: героев трое, стартовый и два за прогресс,
+        /// и «карта даёт идентичность, валюта даёт глубину» — поэтому анлок героя живёт
+        /// в книге рядом с самим героем, а не в таблице расписания где-то ещё.
+        ///
+        /// Ноль по умолчанию выбран сознательно: пока геймдизайнер не расставил главы,
+        /// все книги остаются доступны — ровно как сегодня. Мета не должна отбирать
+        /// у проекта играбельность за то, что её расписание ещё не сверстано.
+        /// </summary>
+        public int UnlockChapter => Mathf.Max(0, _unlockChapter);
+
+        /// <summary>
+        /// Пересчёт пула стихий книги. САМ ВЫВОД ЖИВЁТ НЕ ЗДЕСЬ, а в
+        /// <see cref="SpellDeck.CollectUniqElements"/>: тот же вывод нужен рантайму,
+        /// который собирает колоду из подмножества рецептов (docs/10 §13.1), и две копии
+        /// одного правила разъехались бы молча — «в колбах не те шарики» не выглядит
+        /// как ошибка кода.
+        /// </summary>
         private void OnValidate()
         {
-            List<Element> uniqElements = new List<Element>();
-            foreach(var combination in Combinations)
-            {
-                foreach (var element in combination.Elements)
-                {
-                    if(!uniqElements.Contains(element))
-                        uniqElements.Add(element);
-                }
-            }
-            _uniqElements = uniqElements.ToArray();
+            _uniqElements = SpellDeck.CollectUniqElements(_combinations);
         }
 
     }

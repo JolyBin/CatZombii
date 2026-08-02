@@ -99,7 +99,10 @@ namespace CatZombii.EditorTools
         public static void ResetLevel()
         {
             PlayerProfile profile = ReadProfile();
-            profile.LevelIndex = 0;
+            // С метой (docs/10 §13.4) прогресс переехал из LevelIndex в ClearedNodes:
+            // «текущего уровня» больше нет, узлы перепроходимы. LevelIndex остался
+            // в профиле только как легаси для миграции v1 и на прогресс не влияет.
+            profile.ClearedNodes = 0;
             WriteProfile(profile);
             Debug.Log("[Замер] Уровень сброшен на 1. Прогресс уровней потерян — это цена сравнимости трёх прогонов.");
         }

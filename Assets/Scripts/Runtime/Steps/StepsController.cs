@@ -49,14 +49,27 @@ namespace Core.Steps
         private CancellationTokenSource _partyCts;
 
 
-        public StepsController(IUIService uIService, Book currentBook, HomeController homeController, BattleConfig currentlevel)
+        /// <summary>
+        /// ПАРТИЯ СОБИРАЕТСЯ ИЗ КОЛОДЫ, А НЕ ИЗ КНИГИ — закон docs/10 §13.1.
+        ///
+        /// Что именно поменялось против прежней версии: источником рецептов и стихий
+        /// стал <see cref="SpellDeck"/> (экипированный набор), а книга осталась только
+        /// там, где речь о САМОМ ГЕРОЕ, а не о его заклинаниях, — HP, иконка, имя, класс.
+        /// Больше ничего менять не пришлось: <c>Table</c> и так принимал
+        /// <c>Combination[]</c>, а <c>FlaskController</c> — <c>Element[]</c>.
+        ///
+        /// Следствие, ради которого всё затевалось: взял в колоду рецепт с новой стихией —
+        /// она посыпалась в колбы, и собрать четыре одинаковых стало труднее. Каждое новое
+        /// заклинание делает пазл труднее, поэтому прогрессия балансирует себя сама.
+        /// </summary>
+        public StepsController(IUIService uIService, SpellDeck deck, HomeController homeController, BattleConfig currentlevel)
         {
-            _currentBook = currentBook;
-            _flaskController = new FlaskController(uIService, currentBook.UniqElements);
-            _tableController = new TableController(currentBook, _flaskController, uIService);
+            _currentBook = deck.Book;
+            _flaskController = new FlaskController(uIService, deck.UniqElements);
+            _tableController = new TableController(deck.Combinations, _flaskController, uIService);
             _uiService = uIService;
             _homeController = homeController;
-            _battleController = new BattleController(uIService, currentlevel, currentBook, _tableController);
+            _battleController = new BattleController(uIService, currentlevel, deck.Book, _tableController);
         }
 
         public void Init()
@@ -133,7 +146,10 @@ namespace Core.Steps
             _winWindow.OnClickContinueButton += () =>
             {
                 _winWindow.Hide();
-                _homeController.AddConfigIndex();
+                // Узел засчитан. Возвращённый флаг — «пройден впервые»: из него считается
+                // размер награды (docs/10 §15.3, перепрохождение платит 40%). Само
+                // начисление появится вместе с экраном победы и цифрами геймдизайнера.
+                _homeController.RegisterNodeCleared();
                 Exit();
             };
         }
