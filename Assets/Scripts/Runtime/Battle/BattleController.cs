@@ -60,6 +60,13 @@ namespace Core.Battle
         private Action<BaseSpell> _applySpellAction;
 
         /// <summary>
+        /// Токен партии, из которого делается связанный токен боя. Хранится полем ради
+        /// <see cref="ReviveHero"/>: воскрешение — это второй бой в той же партии,
+        /// и ему нужен НОВЫЙ токен боя, но привязанный к той же партии.
+        /// </summary>
+        private CancellationToken _partyToken;
+
+        /// <summary>
         /// Снимок отряда на время такта. Атака убивает юнита прямо внутри обхода
         /// (Health.OnDied → Remove из списка), поэтому ходить по живому списку нельзя.
         /// Буфер переиспользуется: такт случается на каждое действие игрока.
@@ -82,13 +89,13 @@ namespace Core.Battle
         {
             _currentWaveIndex = 0;
             _isBattleOver = false;
+            _partyToken = partyToken;
             _battleCts = CancellationTokenSource.CreateLinkedTokenSource(partyToken);
 
             HeroHealth = new Health(_playerConfig.HP, 0);
             _battleWindow.SetHero(_playerConfig);
             _battleWindow.SetHealth(HeroHealth.CurrentHP, HeroHealth.MaxHP);
-            HeroHealth.OnChanged += _battleWindow.SetHealth;
-            HeroHealth.OnDied += HeroDie;
+            BindHeroHealth();
 
             _applySpellAction = (BaseSpell spell) => ApplySpell(spell).Forget();
             _tableController.OnSuccessfulMerge += _applySpellAction;
@@ -244,6 +251,79 @@ namespace Core.Battle
         {
             EndBattle();
             OnHeroDie?.Invoke();
+        }
+
+        /// <summary>
+        /// ВОСКРЕСИТЬ ГЕРОЯ И ПРОДОЛЖИТЬ БОЙ. Вход для rewarded-крючка «продолжить после
+        /// поражения» (docs/09 пункт 8; docs/10 §10: «кот встаёт с 50% HP, волна сохраняется»).
+        ///
+        /// ЗДЕСЬ И ЖИВЁТ ПЕРЕПРИВЯЗКА — та самая, без которой воскрешение бессмысленно.
+        /// Смерть героя не просто обнулила HP, она разобрала три связи, и вернуть их
+        /// умеет только тот, кто их ставил, то есть этот класс:
+        ///
+        ///   1) ЦЕЛИ ВРАГОВ. Каждый враг на смерти героя вычеркнул его из своего списка
+        ///      целей (<c>TargetController.AddTarget</c> вешает такую отписку). Не вернуть —
+        ///      и воскресшего героя никто не бьёт: бой становится непроигрываемым,
+        ///      а рекламный крючок — чит-кнопкой.
+        ///   2) ЖИЗНЬ БОЯ. <see cref="EndBattle"/> отменил токен боя и остановил обе стороны.
+        ///      Токен отменённым остаётся навсегда — нужен новый, связанный с той же партией,
+        ///      иначе первое же заклинание отменится, не начавшись.
+        ///   3) ПОЛОСКА ЗДОРОВЬЯ. Перепривязывается принудительно
+        ///      (<see cref="BindHeroHealth"/>) и сразу же обновляется числом: полагаться
+        ///      на «она вроде и не отписывалась» здесь нельзя — цена ошибки как раз и есть
+        ///      «жив в модели, мёртв на экране».
+        ///
+        /// Волна НЕ перезапускается: живые враги остаются с текущим HP и текущими
+        /// таймерами. Это и есть «волна сохраняется» — игрок покупает продолжение
+        /// той же схватки, а не более лёгкую её версию.
+        /// </summary>
+        /// <param name="percentOfMaxHP">Сколько HP вернуть, в процентах от максимума.</param>
+        /// <returns><c>false</c> — воскрешать некого (герой жив или партия уже вышла).</returns>
+        public bool ReviveHero(int percentOfMaxHP)
+        {
+            if (HeroHealth == null || !HeroHealth.IsDead)
+                return false;
+
+            // 2) жизнь боя — новый токен вместо отменённого
+            _battleCts?.Dispose();
+            _battleCts = CancellationTokenSource.CreateLinkedTokenSource(_partyToken);
+            _isBattleOver = false;
+
+            if (!HeroHealth.RevivePercent(percentOfMaxHP))
+                return false;
+
+            // 3) полоска здоровья
+            BindHeroHealth();
+            _battleWindow.SetHealth(HeroHealth.CurrentHP, HeroHealth.MaxHP);
+
+            // 1) цели врагов + снятие паузы с обеих сторон
+            foreach (UnitRuntime enemy in _enemyList)
+            {
+                enemy.TargetController.AddTarget(HeroHealth);
+                enemy.TargetController.ContinueAttack();
+            }
+            foreach (UnitRuntime friend in _friendlyList)
+            {
+                friend.TargetController.ContinueAttack();
+            }
+
+            Debug.Log($"[Battle] Герой воскрешён: {HeroHealth.CurrentHP}/{HeroHealth.MaxHP} HP, " +
+                      $"волна {_currentWaveIndex + 1}, врагов на поле {_enemyList.Count}.");
+            return true;
+        }
+
+        /// <summary>
+        /// Привязка героя к окну боя. Отдельным методом, потому что зовётся ДВАЖДЫ —
+        /// на старте боя и на воскрешении. Парная отписка перед подпиской делает вызов
+        /// идемпотентным: повторное воскрешение не должно давать два обновления полоски
+        /// на один удар (и два вызова <see cref="HeroDie"/> на одну смерть).
+        /// </summary>
+        private void BindHeroHealth()
+        {
+            HeroHealth.OnChanged -= _battleWindow.SetHealth;
+            HeroHealth.OnDied -= HeroDie;
+            HeroHealth.OnChanged += _battleWindow.SetHealth;
+            HeroHealth.OnDied += HeroDie;
         }
 
         /// <summary>
