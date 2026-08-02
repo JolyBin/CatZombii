@@ -700,16 +700,16 @@ RectTransform:
   m_GameObject: {fileID: 6255926539151852027}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
+  m_LocalScale: {x: 1.1, y: 1.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8884129424692731470}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.05659106}
-  m_AnchorMax: {x: 1, y: 1.056591}
+  m_AnchorMin: {x: -0.18831, y: -0.04255}
+  m_AnchorMax: {x: 1.0974, y: 1.22695}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.5354, y: 0.03352}
 --- !u!222 &3748104794774234129
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -935,6 +935,29 @@ MonoBehaviour:
   _fillTimerImage: {fileID: 1121401485784593594}
   _selectedImage: {fileID: 5838706999157258436}
   _selectedButton: {fileID: 6986941892739322528}
+  _visualImage: {fileID: 9014587220544313986}
+  _idleFrames:
+  - {fileID: 21300000, guid: 9140b3edd6dc5ae4eb4d2a23309aef78, type: 3}
+  - {fileID: 21300000, guid: 802104f0a6222004abd11724d113dbf4, type: 3}
+  - {fileID: 21300000, guid: eef5daad118cc5c46a58954e3e48639e, type: 3}
+  - {fileID: 21300000, guid: 56710b1cd509940428707800872ab76e, type: 3}
+  - {fileID: 21300000, guid: f180c3bcda43ea24989676a4f1a656af, type: 3}
+  - {fileID: 21300000, guid: 7b8203906a4af6042b7dcb26d7d3ecba, type: 3}
+  - {fileID: 21300000, guid: 13048b2ea3f9cf04ba1e5e6d3dcd26fc, type: 3}
+  - {fileID: 21300000, guid: 9f85314b5a9ef534c90e07c864361bec, type: 3}
+  _attackFrames:
+  - {fileID: 21300000, guid: bcee748eb96800647bc5817ad67ebfdd, type: 3}
+  - {fileID: 21300000, guid: c1b0c044b4c2d8a478047dcff9577a06, type: 3}
+  - {fileID: 21300000, guid: 2433d15cb8db39a4ba7205ed79da6276, type: 3}
+  - {fileID: 21300000, guid: 694a48496e55c0f4da11f2e814644c6a, type: 3}
+  - {fileID: 21300000, guid: 5e81da1dc444eb348aef0576d6cd4ab7, type: 3}
+  - {fileID: 21300000, guid: 301179ad60dd15b45a810793a1886ed4, type: 3}
+  - {fileID: 21300000, guid: 2425f5ba6234b5043b3f298f84e2ea52, type: 3}
+  - {fileID: 21300000, guid: d7ff799878e0da64e908fcda33e16dea, type: 3}
+  _deathFrames: []
+  _idleFps: 12
+  _attackFps: 16
+  _deathFps: 14
 --- !u!1 &6703647132383063362
 GameObject:
   m_ObjectHideFlags: 0
@@ -1500,4 +1523,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_AspectMode: 3
-  m_AspectRatio: 1
+  m_AspectRatio: 1.0922
+

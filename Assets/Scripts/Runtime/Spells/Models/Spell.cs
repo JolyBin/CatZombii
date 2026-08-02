@@ -1,16 +1,41 @@
-
-using Core.Battle;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Core.Spells
 {
+    /// <summary>
+    /// ЗАГОТОВКА ЗАКЛИНАНИЯ — ассет есть, эффекта нет (docs/06 §9).
+    ///
+    /// На этом классе висят все восемь заклинаний Мага и Чаровницы. Он не баг,
+    /// а честная метка «контент ещё не написан»: цепочка стихий, имя и иконка уже
+    /// заведены геймдизайнером, а класс эффекта ему ещё предстоит выбрать.
+    ///
+    /// ЧТОБЫ ЗАКЛИНАНИЕ ЗАРАБОТАЛО, кода писать не надо — надо переставить ассет
+    /// на настоящий конфиг (<c>PowerAttackConfig</c>, <c>AoeAttackConfig</c>,
+    /// <c>FastAttackSpellConfig</c>, <c>RegenirationConfig</c>, <c>CreatePetConfig</c>,
+    /// <c>UltPetConfig</c> — список и назначения в docs/10 §14). Как только у книги
+    /// не останется ни одной заготовки, её герой откроется сам:
+    /// <see cref="Book.IsReady"/> считается по <see cref="BaseSpellConfig.IsImplemented"/>,
+    /// а не по списку имён где-то в коде.
+    /// </summary>
     [CreateAssetMenu(fileName = "Spell", menuName = "Spells/Create Spell")]
     public class Spell : BaseSpellConfig
     {
+        /// <summary>
+        /// Единственный смысл этого класса. Мета спрашивает ИМЕННО ЭТО и не пускает
+        /// игрока в героя, у которого хоть один рецепт — заготовка.
+        /// </summary>
+        public override bool IsImplemented => false;
 
+        /// <summary>
+        /// Сюда попасть больше нельзя штатным путём: героя с заготовками не выбрать
+        /// (<c>MetaController.AvailabilityOf</c>), а значит и в котёл его рецепт не попадёт.
+        /// Исключение остаётся вместо «вернуть пустое заклинание» намеренно: тихая
+        /// заглушка означала бы бой, в котором варка молча не работает, и искать причину
+        /// пришлось бы часами. Текст называет ассет — чтобы искать не пришлось вовсе.
+        /// </summary>
         public override BaseSpell GetSpell()
-        {
-            throw new System.NotImplementedException();
-        }
+            => throw new System.NotImplementedException(
+                $"Заклинание «{name}» — заготовка: у него нет класса эффекта (docs/06 §9). " +
+                "Замени ассет на настоящий конфиг из docs/10 §14 — герой откроется сам.");
     }
 }

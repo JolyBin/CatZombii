@@ -26,3 +26,4 @@ MonoBehaviour:
   _uniqElements:
   - {fileID: 11400000, guid: f218f900823979f418512da3d93cfc2f, type: 2}
   - {fileID: 11400000, guid: 98057fa97ee93e342a415183e5a39e9a, type: 2}
+  _unlockChapter: 0

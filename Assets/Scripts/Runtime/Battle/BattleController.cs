@@ -138,7 +138,9 @@ namespace Core.Battle
                 _enemyList.Remove(unitRuntime);
                 if (HeroTarget == unitRuntime)
                     SelectedLastTarget();
-                unitRuntime.Dispose();
+                // true — враг умер в бою, ему дают доиграть смерть; слот при этом
+                // освобождается сразу, труп уходит под новичка (UIUnit.PlayDeath)
+                unitRuntime.Dispose(true);
                 unitPosition?.SetFree();
 
                 if (_enemyList.Count == 0 && !_isBattleOver)
@@ -188,7 +190,7 @@ namespace Core.Battle
                 unitPosition?.SetFree();
                 OnAddEnemy -= unitRuntime.TargetController.AddTarget;
                 _friendlyList.Remove(unitRuntime);
-                unitRuntime.Dispose();
+                unitRuntime.Dispose(true);
             };
         }
 

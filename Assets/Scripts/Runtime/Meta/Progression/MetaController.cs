@@ -3,10 +3,35 @@ using System.Collections.Generic;
 using Core.Battle;
 using Core.Spells;
 using UnityEngine;
+using Utility.Services.Localization;
 using Utility.Services.Saves;
 
 namespace Meta
 {
+    /// <summary>
+    /// ПОЧЕМУ ГЕРОЙ НЕДОСТУПЕН. Причин ровно две, и они РАЗНОЙ ПРИРОДЫ — поэтому
+    /// это перечисление, а не <c>bool</c>: игроку надо сказать разное, и правит их
+    /// разный человек.
+    /// </summary>
+    public enum HeroAvailability
+    {
+        /// <summary>Играй.</summary>
+        Available = 0,
+
+        /// <summary>
+        /// КОНТЕНТ НЕ ДОПИСАН (<see cref="Book.IsReady"/>): у книги есть рецепты-заготовки,
+        /// варка которых бросает исключение (docs/06 §9). Правит геймдизайнер, переставляя
+        /// ассет заклинания на настоящий конфиг; глава здесь ни при чём.
+        /// </summary>
+        NotReady = 1,
+
+        /// <summary>
+        /// ПРОГРЕСС ЕЩЁ НЕ ОТКРЫЛ (<see cref="Book.UnlockChapter"/>, docs/10 §13.4):
+        /// герой дописан и играбелен, но выдаётся за босса своей главы.
+        /// </summary>
+        LockedByChapter = 2,
+    }
+
     /// <summary>
     /// МЕТА ЦЕЛИКОМ, ОДНИМ ОБЪЕКТОМ: карта, кошелёк, покупки, колоды, открытые герои.
     /// Всё, что экранам меты нужно знать и менять, они спрашивают отсюда — и только отсюда.
@@ -102,9 +127,13 @@ namespace Meta
         }
 
         /// <summary>
-        /// Открыт ли герой. docs/10 §13.4: героев трое, стартовый и два за боссов узлов
-        /// 5 и 10; <b>валютой герои не покупаются</b>. Книги со <c>UnlockChapter == 0</c>
-        /// открыты всегда — сегодня это все четыре, пока геймдизайнер не расставил главы.
+        /// Открыл ли ПРОГРЕСС этого героя. docs/10 §13.4: героев трое, стартовый и два
+        /// за боссов узлов 5 и 10; <b>валютой герои не покупаются</b>. Книги со
+        /// <c>UnlockChapter == 0</c> открыты всегда.
+        ///
+        /// ⚠️ Это ответ ТОЛЬКО про прогрессию. Играбельность спрашивают у
+        /// <see cref="AvailabilityOf"/>: герой может быть открыт боссом и всё равно
+        /// недоступен, потому что его заклинания ещё не дописаны.
         /// </summary>
         public bool IsHeroUnlocked(Book book)
         {
@@ -116,16 +145,67 @@ namespace Meta
             return Saves.Profile.IsHeroUnlocked(book.HeroId);
         }
 
-        /// <summary>Все книги проекта — список для окна героев.</summary>
+        /// <summary>
+        /// МОЖНО ЛИ ЭТИМ ГЕРОЕМ ИГРАТЬ, и если нет — почему. Единственный вопрос, который
+        /// имеет право задавать окно героев.
+        ///
+        /// ПОРЯДОК ПРОВЕРОК ЗНАЧАЩИЙ: сначала контент, потом прогресс. Недописанному герою
+        /// нельзя обещать «дойди до босса — откроется»: игрок дойдёт, получит его и уронит
+        /// игру. Честный ответ здесь — «ещё в работе», и он верен независимо от того,
+        /// какую главу ему когда-нибудь назначат.
+        /// </summary>
+        public HeroAvailability AvailabilityOf(Book book)
+        {
+            if (book == null || !book.IsReady)
+                return HeroAvailability.NotReady;
+            if (!IsHeroUnlocked(book))
+                return HeroAvailability.LockedByChapter;
+
+            return HeroAvailability.Available;
+        }
+
+        public bool IsHeroAvailable(Book book) => AvailabilityOf(book) == HeroAvailability.Available;
+
+        /// <summary>
+        /// ОТКАЗ СЛОВАМИ ИГРОКА. Живёт рядом с законом, а не в окне, — ровно по тому же
+        /// правилу, по которому здесь же живёт <c>HeroLoadout.Describe</c>: правило и его
+        /// объяснение обязаны меняться вместе, иначе экран однажды начнёт рассказывать
+        /// про запрет, которого уже нет.
+        ///
+        /// Пустая строка — герой доступен, показывать нечего.
+        /// </summary>
+        public string DescribeUnavailable(Book book)
+        {
+            switch (AvailabilityOf(book))
+            {
+                case HeroAvailability.Available:
+                    return string.Empty;
+                case HeroAvailability.LockedByChapter:
+                    return Localization.Get(LocKeys.HeroesLockedByChapter, book.UnlockChapter);
+                default:
+                    return Localization.Get(LocKeys.HeroesLockedNotReady);
+            }
+        }
+
+        /// <summary>
+        /// Все книги проекта — список для окна героев.
+        ///
+        /// ⚠️ Здесь ВСЁ, что лежит в <c>Resources/Spells/Books</c>, включая служебные
+        /// книги замера (<c>TactMeter Books</c>). Признака «это герой» у книги нет,
+        /// и выдумывать его здесь нельзя: тот же <c>BookCatalog</c> обслуживает
+        /// <c>TactMeterSetupMenu</c>, который кладёт книгу замера в сейв как героя.
+        /// Окно героев сегодня берёт свой список из сцены, а не отсюда.
+        /// </summary>
         public Book[] AllHeroes => BookCatalog.All;
 
         /// <summary>
-        /// ВЫБОР ГЕРОЯ. Закрытого героя выбрать нельзя — это и есть разделение из §13.4:
-        /// карта даёт идентичность, валюта даёт глубину.
+        /// ВЫБОР ГЕРОЯ. Недоступного героя выбрать нельзя — ни закрытого прогрессом
+        /// (§13.4: карта даёт идентичность, валюта даёт глубину), ни недописанного
+        /// (docs/06 §9: его варка бросает исключение посреди боя).
         /// </summary>
         public bool TrySelectHero(Book book)
         {
-            if (book == null || !IsHeroUnlocked(book))
+            if (!IsHeroAvailable(book))
                 return false;
             if (_currentBook == book)
                 return true;
@@ -252,11 +332,21 @@ namespace Meta
                 if (book == null || book.UnlockChapter != chapter || IsHeroUnlocked(book))
                     continue;
 
-                if (Saves.Profile.UnlockHero(book.HeroId))
-                {
-                    Saves.RequestSave($"открыт герой «{book.HeroId}» за босса главы {chapter}");
+                if (!Saves.Profile.UnlockHero(book.HeroId))
+                    continue;
+
+                Saves.RequestSave($"открыт герой «{book.HeroId}» за босса главы {chapter}");
+
+                // ФАКТ ПРОГРЕССА ЗАПИСЫВАЕТСЯ ВСЕГДА, А ОБЪЯВЛЯЕТСЯ — ТОЛЬКО ГОТОВЫЙ ГЕРОЙ.
+                // Босса игрок победил, и отбирать у него это событие нельзя: когда
+                // геймдизайнер допишет заклинания, герой обязан оказаться уже открытым,
+                // а не требовать перепройти босса. Но праздновать «новый герой!» ради
+                // того, кого нельзя выбрать, — это обещание, которое экран тут же нарушит.
+                if (book.IsReady)
                     OnHeroUnlocked?.Invoke(book);
-                }
+                else
+                    Debug.Log($"[Мета] Герой «{book.HeroId}» открыт прогрессом, но ещё не дописан " +
+                              $"({book.UnfinishedRecipes} рецептов-заготовок) — объявим, когда будет готов.");
             }
         }
 
@@ -287,15 +377,53 @@ namespace Meta
         {
             string savedHeroId = Saves.Profile.HeroId;
             if (string.IsNullOrEmpty(savedHeroId))
-                return fallbackBook;
+                return FirstPlayable(fallbackBook);
 
             Book savedBook = BookCatalog.Find(savedHeroId);
-            if (savedBook != null)
-                return savedBook;
+            if (savedBook == null)
+            {
+                Debug.LogWarning($"[Saves] Героя «{savedHeroId}» из сейва нет среди книг " +
+                                 $"(Resources/{BookCatalog.RESOURCES_PATH}). Берём героя по умолчанию.");
+                return FirstPlayable(fallbackBook);
+            }
 
-            Debug.LogWarning($"[Saves] Героя «{savedHeroId}» из сейва нет среди книг " +
-                             $"(Resources/{BookCatalog.RESOURCES_PATH}). Берём героя по умолчанию.");
-            return fallbackBook;
+            // ЧЕТВЁРТЫЙ ПЛОХОЙ СЛУЧАЙ, которого раньше не было: в сейве лежит герой,
+            // которым игрок УСПЕЛ выбрать себя до того, как недописанных героев заперли.
+            // Оставить его значит вернуть ровно ту поломку, ради которой запирали:
+            // первая же варка бросит NotImplementedException посреди боя.
+            if (!savedBook.IsReady)
+            {
+                Debug.LogWarning($"[Saves] Герой «{savedHeroId}» из сейва ещё не дописан " +
+                                 $"({savedBook.UnfinishedRecipes} рецептов-заготовок, docs/06 §9) — " +
+                                 "играть им нельзя. Берём героя по умолчанию; выбор вернётся сам, " +
+                                 "когда заклинания допишут.");
+                return FirstPlayable(fallbackBook);
+            }
+
+            return savedBook;
+        }
+
+        /// <summary>
+        /// Герой, которым точно можно играть. Обычно это <paramref name="preferred"/> —
+        /// <c>GameManager._startBook</c>; поиск по каталогу включается, только если
+        /// стартовым героем на сцене назначили недописанного.
+        ///
+        /// <c>null</c> здесь возможен и означает, что играбельных книг в проекте нет вовсе.
+        /// Молча подставлять недописанную книгу нельзя: игра запустится и упадёт на первой
+        /// же варке, то есть ошибка вылезет там, где её уже не связать с причиной.
+        /// </summary>
+        private static Book FirstPlayable(Book preferred)
+        {
+            if (preferred != null && preferred.IsReady)
+                return preferred;
+
+            foreach (Book book in BookCatalog.All)
+                if (book != null && book.IsReady && book.UnlockChapter <= 0)
+                    return book;
+
+            Debug.LogError("[Мета] Ни одной дописанной книги, открытой с начала, в проекте нет — " +
+                           "играть нечем. Проверь Tools → Книга → Показать дерево рецептов.");
+            return preferred;
         }
 
         private void RaiseLoadoutChanged() => OnLoadoutChanged?.Invoke();

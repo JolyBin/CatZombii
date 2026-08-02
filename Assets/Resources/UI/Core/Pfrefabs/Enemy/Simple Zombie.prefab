@@ -612,16 +612,16 @@ RectTransform:
   m_GameObject: {fileID: 4355248009162941833}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: -1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5018210021695854397}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: -0.11888, y: -0.23581}
+  m_AnchorMax: {x: 1.18182, y: 1.16157}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.4758, y: 0.16875}
 --- !u!222 &4889519158925521947
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1023,6 +1023,35 @@ MonoBehaviour:
   _fillTimerImage: {fileID: 6210449861305278290}
   _selectedImage: {fileID: 6657101454620306320}
   _selectedButton: {fileID: 3460005238456618144}
+  _visualImage: {fileID: 3838989758486239654}
+  _idleFrames:
+  - {fileID: 21300000, guid: 365f4f956f56896448ccf3760d0b1102, type: 3}
+  - {fileID: 21300000, guid: 2b3236b5364f12540b1fc01cf39e5f72, type: 3}
+  - {fileID: 21300000, guid: 6168105e99a03d84fa54e9cd7f6b8308, type: 3}
+  - {fileID: 21300000, guid: 4430ae45e09034145a01f36baafac3fc, type: 3}
+  - {fileID: 21300000, guid: 503c26f29e8b95a4fbd6b97c76e70c58, type: 3}
+  - {fileID: 21300000, guid: ad9885abeb8103048b5bc7671c098cfc, type: 3}
+  - {fileID: 21300000, guid: 8542ba03e8d4c8c47983857c9148d729, type: 3}
+  - {fileID: 21300000, guid: 1133cd5b311790e45a9a857ba642d31c, type: 3}
+  _attackFrames:
+  - {fileID: 21300000, guid: 2bd4d160e53a544468e6c47bb4acfe7a, type: 3}
+  - {fileID: 21300000, guid: b8d1dbc094ec9b24883197bd412c699f, type: 3}
+  - {fileID: 21300000, guid: 5d8be0dfbc9331a4ab8cf214015f1fca, type: 3}
+  - {fileID: 21300000, guid: 72df135061a49284096de14be15bb9a2, type: 3}
+  - {fileID: 21300000, guid: a4989332b912a2f4488b5aff15403d25, type: 3}
+  - {fileID: 21300000, guid: f60111449db8bc244ae26b9ad1f3565d, type: 3}
+  - {fileID: 21300000, guid: 1432f98726cd29b448c31e9fffcf0d16, type: 3}
+  - {fileID: 21300000, guid: dc815c042c53d3e489ef1b7dc50aa539, type: 3}
+  _deathFrames:
+  - {fileID: 21300000, guid: 17ed9b3c0a502d34b91fd15eb3c06493, type: 3}
+  - {fileID: 21300000, guid: bdf22924fbc0a7a42bf625f851b8e62f, type: 3}
+  - {fileID: 21300000, guid: a16b87fedf4e74140b71912402db9407, type: 3}
+  - {fileID: 21300000, guid: 0aba74be3f445a149876d010de648164, type: 3}
+  - {fileID: 21300000, guid: 2389af834937c7a4cbc0b71433eaeb9e, type: 3}
+  - {fileID: 21300000, guid: ab29e74ab9e536647ad4f56f9b5cc664, type: 3}
+  _idleFps: 12
+  _attackFps: 16
+  _deathFps: 14
 --- !u!1 &8454810433257624307
 GameObject:
   m_ObjectHideFlags: 0
@@ -1500,4 +1529,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_AspectMode: 3
-  m_AspectRatio: 1
+  m_AspectRatio: 1.2489
+

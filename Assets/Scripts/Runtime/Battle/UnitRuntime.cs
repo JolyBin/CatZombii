@@ -37,6 +37,11 @@ namespace Core.Battle
 
                 TargetController.OnTimerChanged += UIUnit.SetTimer;
                 _unitSpell.InitSpell(this, battleController);
+
+                // замах — ПОСЛЕ удара, а не вместо него: урон уже нанесён этим же
+                // событием выше по списку подписчиков. Отписка не нужна —
+                // TargetController.Dispose() зануляет OnAttack целиком.
+                TargetController.OnAttack += UIUnit.PlayAttack;
             }
             else
             {
@@ -45,12 +50,23 @@ namespace Core.Battle
 
         }
 
-        public void Dispose()
+        /// <param name="playDeathAnimation">
+        /// <c>true</c> — юнит умер в бою: даём ему доиграть смерть, объект убьёт себя сам
+        /// по последнему кадру. <c>false</c> — партия закончилась и сцену разбирают,
+        /// доигрывать нечего и негде: труп пережил бы окно боя и встретил следующую партию.
+        /// </param>
+        public void Dispose(bool playDeathAnimation = false)
         {
             Health.Dispose();
             TargetController.Dispose();
             UIUnit.ClearAction();
             _unitSpell?.DisposeSpell();
+
+            if (playDeathAnimation && UIUnit.HasDeathFrames)
+            {
+                UIUnit.PlayDeath();
+                return;
+            }
             GameObject.Destroy(UIUnit.gameObject);
         }
     }

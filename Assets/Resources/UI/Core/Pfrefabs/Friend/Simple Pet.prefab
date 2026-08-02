@@ -950,11 +950,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 8884129424692731470}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: -0.24623, y: -0.27586}
+  m_AnchorMax: {x: 1.42714, y: 1.51724}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.4459, y: 0.15385}
 --- !u!222 &3748104794774234129
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1180,6 +1180,29 @@ MonoBehaviour:
   _fillTimerImage: {fileID: 1121401485784593594}
   _selectedImage: {fileID: 6855558593101480643}
   _selectedButton: {fileID: 3879129143918663108}
+  _visualImage: {fileID: 9014587220544313986}
+  _idleFrames:
+  - {fileID: 21300000, guid: e74d603fb2a7f024aa20815d97e23959, type: 3}
+  - {fileID: 21300000, guid: 95a59becb556c6a4585e9c90e60f86fd, type: 3}
+  - {fileID: 21300000, guid: cbdedcc3edb781149b6484197eeead70, type: 3}
+  - {fileID: 21300000, guid: ba53413bd5eb22d41a7baabb7dea4d5f, type: 3}
+  - {fileID: 21300000, guid: a483d28e3dea98944946b1cb3bd07069, type: 3}
+  - {fileID: 21300000, guid: b7e6ee1802346d74eb8a5a001ca4f45b, type: 3}
+  - {fileID: 21300000, guid: b04d3033b97cf2a4a96f9281ebd0f314, type: 3}
+  - {fileID: 21300000, guid: 647d4603c60b21b4c8a12e80e1929907, type: 3}
+  _attackFrames:
+  - {fileID: 21300000, guid: cea27d49b7437a8478e6dae38b5bc061, type: 3}
+  - {fileID: 21300000, guid: 1383bac3182d00f4589b483cb91d40e0, type: 3}
+  - {fileID: 21300000, guid: 7675dc603a7fd374698aceb9227ef853, type: 3}
+  - {fileID: 21300000, guid: 66df9e8966d071d4682473f371cc1152, type: 3}
+  - {fileID: 21300000, guid: fb1939a785854624380021732fdfea5a, type: 3}
+  - {fileID: 21300000, guid: 72e459a7f2852b8499f22e7f2d07c8f9, type: 3}
+  - {fileID: 21300000, guid: 7ed65770568c56848b52bcf31c9d6772, type: 3}
+  - {fileID: 21300000, guid: 31bd85a65c091c94a90c4396c901f283, type: 3}
+  _deathFrames: []
+  _idleFps: 12
+  _attackFps: 16
+  _deathFps: 14
 --- !u!1 &7086841244505883585
 GameObject:
   m_ObjectHideFlags: 0
@@ -1500,4 +1523,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_AspectMode: 3
-  m_AspectRatio: 1
+  m_AspectRatio: 1.3724
+

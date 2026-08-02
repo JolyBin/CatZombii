@@ -21,6 +21,13 @@
         /// <summary>Котёл: варка не дала заклинания. Ветка штатная и частая (docs/10 §6).</summary>
         public const string TableBrewFailed = "table.brew_failed";
 
+        /// <summary>
+        /// Окно победы: НАЧИСЛЕННАЯ НАГРАДА — «Клубков: +{0}» (docs/10 §15.3).
+        /// Число приходит из <c>HomeController.RegisterNodeCleared</c>, то есть
+        /// от единственного счётчика награды; своей арифметики у окна нет.
+        /// </summary>
+        public const string WinReward = "win.reward";
+
         #region Мета: карта узлов, колода, лавка (docs/10 §13)
 
         /// <summary>Карта: подпись узла — «Узел {0}».</summary>
@@ -117,6 +124,26 @@
         /// пустая колода означает пустой пул стихий, то есть падение генератора шариков.
         /// </summary>
         public const string DeckErrorLastRecipe = "deck.error_last_recipe";
+
+        #endregion
+
+        #region Мета: ОТКАЗЫ в выборе героя (docs/10 §13.4 и docs/06 §9)
+
+        // Причин ровно две, и они разной природы — поэтому и строк две, а не одна
+        // обтекаемая «герой недоступен». Разбор — Meta.HeroAvailability.
+
+        /// <summary>
+        /// Отказ: герой ещё не дописан — у его книги есть рецепты-заготовки, варка которых
+        /// упала бы прямо в бою (docs/06 §9). Это про КОНТЕНТ, а не про прогресс, поэтому
+        /// строка ничего не обещает: срока у неё нет.
+        /// </summary>
+        public const string HeroesLockedNotReady = "heroes.locked_not_ready";
+
+        /// <summary>
+        /// Отказ: герой открывается боссом главы {0} (docs/10 §13.4). Это про ПРОГРЕСС,
+        /// поэтому строка называет условие: игрок должен понимать, что делать.
+        /// </summary>
+        public const string HeroesLockedByChapter = "heroes.locked_by_chapter";
 
         #endregion
     }

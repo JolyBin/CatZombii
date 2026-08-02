@@ -239,6 +239,12 @@ namespace Meta
         public void Exit()
         {
             CloseMeta();
+
+            // Окно героев живёт отдельно от трёх экранов меты (оно открывается поверх
+            // домашнего), поэтому CloseMeta его не касается — а разбирать его надо:
+            // HeroController держит созданную кодом полосу сообщений.
+            _heroController?.ClearAction();
+
             _meta.Exit();
         }
 

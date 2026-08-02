@@ -308,11 +308,31 @@ namespace Meta
             _screens?.Refresh();
         }
 
-        /// <summary>Тап по слоту колоды — снять то, что в нём лежит.</summary>
+        /// <summary>
+        /// Тап по слоту колоды — снять то, что в нём лежит.
+        ///
+        /// ЗАКРЫТЫЙ СЛОТ ВЕДЁТ В ЛАВКУ, а не молчит. Экран колоды рисует закрытые слоты
+        /// вместе с ценой («Слот за 150») — это витрина стока валюты (docs/10 §13.3),
+        /// и витрина, на которую нажали, а она не ответила, читается как поломка.
+        /// Отдельной строки-отказа здесь не нужно: «нажал на цену — попал туда, где
+        /// покупают» короче любого объяснения и не требует перевода.
+        ///
+        /// Пустой открытый слот молчит намеренно: снимать из него нечего, и говорить
+        /// об этом — шум.
+        /// </summary>
         public void HandleSlotChosen(int index)
         {
             HeroLoadout loadout = _meta.CurrentLoadout;
-            if (loadout == null || index < 0 || index >= loadout.Equipped.Count)
+            if (loadout == null || index < 0)
+                return;
+
+            if (index >= loadout.Slots)
+            {
+                _screens?.ShowShop();
+                return;
+            }
+
+            if (index >= loadout.Equipped.Count)
                 return;
 
             HandleRecipeChosen(loadout.Equipped[index]);
