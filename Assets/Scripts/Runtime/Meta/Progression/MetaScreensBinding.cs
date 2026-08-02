@@ -4,6 +4,7 @@ using Core.Flask.Models;
 using Core.Spells;
 using Meta.Models;
 using UnityEngine;
+using Utility.Services.Localization;
 using Utility.Services.Saves;
 
 namespace Meta
@@ -13,14 +14,16 @@ namespace Meta
     ///
     /// Экраны меты просят три модели (<c>MapScreenModel</c>, <c>DeckScreenModel</c>,
     /// <c>ShopScreenModel</c>) и присылают обратно пять событий. Этот класс собирает
-    /// модели из настоящего профиля и применяет клики ПО ЗАКОНАМ docs/10 §13 —
-    /// то есть заменяет собой <c>MetaScreensStub</c> целиком.
+    /// модели из настоящего профиля и применяет клики ПО ЗАКОНАМ docs/10 §13.
     ///
-    /// ПОДКЛЮЧЕНИЕ — одна строка:
+    /// ПОДКЛЮЧЕНИЕ живёт в <see cref="HomeController.OpenMap"/> и выглядит так:
     /// <code>
-    /// var binding = new MetaScreensBinding(homeController);
+    /// var binding = homeController.CreateScreensBinding();
+    /// var screens = new MetaScreensController(uiService);
     /// binding.AttachTo(screens);   // расставит источники моделей и подпишет обработчики
+    /// screens.OnExit += ...;       // «назад» с карты — единственный выход из меты
     /// screens.ShowMap();
+    /// // на выходе, обязательно обе половины: binding.ClearAction(); screens.Exit();
     /// </code>
     ///
     /// ═══ ЧТО ЗДЕСЬ СОЗНАТЕЛЬНО НЕ ТАК, КАК В ЗАГЛУШКЕ ═══
@@ -49,12 +52,25 @@ namespace Meta
         private MetaScreensController _screens;
 
         /// <summary>
-        /// Почему последнее действие не прошло — уже локализованная строка. Окна сегодня
-        /// не умеют показывать отказ (у них только <c>Init(model)</c>), поэтому текст
-        /// лежит здесь и ждёт всплывашки; в консоль он уходит сразу, чтобы отказ
-        /// не был невидимым на плейтесте.
+        /// Почему последнее действие не прошло — уже локализованная строка. Живёт
+        /// для логов и отладки: <b>не</b> гасится показом, поэтому её всегда можно
+        /// спросить «а что было последним отказом».
         /// </summary>
         public string LastRefusal { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Отказ, ЕЩЁ НЕ ПОКАЗАННЫЙ игроку. Отдаётся ровно один раз —
+        /// <see cref="ConsumeRefusal"/> забирает его в модель и обнуляет.
+        ///
+        /// Одноразовость здесь не оптимизация, а способ не заводить у сообщения
+        /// собственную жизнь. Иначе всплывашке нужен либо таймер (в <c>Runtime</c>
+        /// намеренно нет ни одного <c>UniTask.Delay</c> — docs/10 §0.2), либо явное
+        /// «погасить» из каждого места, где что-то поменялось, и первое же забытое
+        /// место оставит игроку «нет свободного слота» поверх лавки. Одноразовая
+        /// строка гаснет сама: следующая перерисовка соберёт модель уже с пустым
+        /// отказом, а перерисовка случается и после успеха, и при смене экрана.
+        /// </summary>
+        private string _pendingRefusal = string.Empty;
 
         public MetaScreensBinding(HomeController home)
         {
@@ -124,14 +140,14 @@ namespace Meta
                 };
             }
 
-            return new MapScreenModel { Nodes = nodes, Yarn = _meta.Coins };
+            return new MapScreenModel { Nodes = nodes, Yarn = _meta.Coins, Refusal = ConsumeRefusal() };
         }
 
         public DeckScreenModel BuildDeck()
         {
             HeroLoadout loadout = _meta.CurrentLoadout;
             if (loadout == null)
-                return new DeckScreenModel { Yarn = _meta.Coins };
+                return new DeckScreenModel { Yarn = _meta.Coins, Refusal = ConsumeRefusal() };
 
             List<RecipeView> collection = new List<RecipeView>();
             foreach (string recipeId in loadout.AllRecipes)
@@ -167,6 +183,7 @@ namespace Meta
                 SlotsUnlocked = loadout.Slots,
                 SlotsMax = slotsMax,
                 Yarn = _meta.Coins,
+                Refusal = ConsumeRefusal(),
             };
         }
 
@@ -174,7 +191,7 @@ namespace Meta
         {
             HeroLoadout loadout = _meta.CurrentLoadout;
             if (loadout == null)
-                return new ShopScreenModel { Yarn = _meta.Coins };
+                return new ShopScreenModel { Yarn = _meta.Coins, Refusal = ConsumeRefusal() };
 
             List<ShopOfferView> offers = new List<ShopOfferView>();
             int elementsNow = loadout.ElementCount;
@@ -230,18 +247,30 @@ namespace Meta
                 });
             }
 
-            return new ShopScreenModel { Offers = offers.ToArray(), Yarn = _meta.Coins };
+            return new ShopScreenModel
+            {
+                Offers = offers.ToArray(),
+                Yarn = _meta.Coins,
+                Refusal = ConsumeRefusal(),
+            };
         }
 
         // =====================================================================================
         // Клики
         // =====================================================================================
 
-        /// <summary>Игрок ткнул в узел карты. Номер 1-based — так его отдаёт экран.</summary>
+        /// <summary>
+        /// Игрок ткнул в узел карты. Номер 1-based — так его отдаёт экран.
+        ///
+        /// Отказ здесь редкий: запертый узел уже не кликается (<c>UIMapNode</c> гасит
+        /// <c>Button.interactable</c>), поэтому сюда доходит либо узел без собранного
+        /// уровня, либо рассинхрон карты с прогрессом. Игроку в обоих случаях говорим
+        /// одно и то же — «узел ещё закрыт»; разницу видит только консоль.
+        /// </summary>
         public void HandleNodeChosen(int number)
         {
             if (!_home.TryStartNode(number - 1))
-                Refuse($"узел {number} закрыт или его нет в сборке");
+                Refuse(Localization.Get(LocKeys.MapErrorNodeLocked));
         }
 
         /// <summary>
@@ -275,7 +304,7 @@ namespace Meta
                 loadout.TryEquip(recipeId);
             }
 
-            LastRefusal = string.Empty;
+            ClearRefusal();
             _screens?.Refresh();
         }
 
@@ -306,12 +335,11 @@ namespace Meta
 
             if (!done)
             {
-                Refuse(Utility.Services.Localization.Localization.Get(
-                    Utility.Services.Localization.LocKeys.ShopNotEnough));
+                Refuse(Localization.Get(LocKeys.ShopNotEnough));
                 return;
             }
 
-            LastRefusal = string.Empty;
+            ClearRefusal();
             _screens?.Refresh();
         }
 
@@ -319,11 +347,36 @@ namespace Meta
         // Мелочи
         // =====================================================================================
 
+        /// <summary>Действие удалось — прошлому отказу на экране больше не место.</summary>
+        private void ClearRefusal()
+        {
+            LastRefusal = string.Empty;
+            _pendingRefusal = string.Empty;
+        }
+
+        /// <summary>
+        /// ОТКАЗАТЬ И ПОКАЗАТЬ ЭТО ИГРОКУ. <paramref name="reason"/> — УЖЕ локализованная
+        /// строка: формулировки живут рядом с законами, которые их порождают
+        /// (<c>HeroLoadout.Describe</c>), а не здесь.
+        ///
+        /// Перерисовка обязательна и после отказа тоже: именно она донесёт строку
+        /// до экрана через <c>model.Refusal</c>. В консоль отказ уходит по-прежнему —
+        /// на плейтесте лог переживает закрытое окно, а полоса нет.
+        /// </summary>
         private void Refuse(string reason)
         {
             LastRefusal = reason ?? string.Empty;
+            _pendingRefusal = LastRefusal;
             Debug.Log($"[Мета] Отказ: {LastRefusal}");
             _screens?.Refresh();
+        }
+
+        /// <summary>Забрать неотданный отказ. Второй раз подряд вернёт пусто — см. <see cref="_pendingRefusal"/>.</summary>
+        private string ConsumeRefusal()
+        {
+            string refusal = _pendingRefusal;
+            _pendingRefusal = string.Empty;
+            return refusal;
         }
 
         private RecipeView ToRecipeView(HeroLoadout loadout, string recipeId)

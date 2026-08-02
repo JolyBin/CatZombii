@@ -57,6 +57,9 @@ namespace Meta.Models
         public MapNodeView[] Nodes = Array.Empty<MapNodeView>();
 
         public int Yarn;
+
+        /// <inheritdoc cref="DeckScreenModel.Refusal"/>
+        public string Refusal;
     }
 
     /// <summary>Стихия так, как её видит экран: цвет И силуэт (docs/12 §4.3 — цвет один запрещён).</summary>
@@ -137,6 +140,20 @@ namespace Meta.Models
         public int SlotsMax = 8;
 
         public int Yarn;
+
+        /// <summary>
+        /// ПОЧЕМУ ПОСЛЕДНЕЕ ДЕЙСТВИЕ НЕ ПРОШЛО — уже локализованная строка, пусто —
+        /// показывать нечего.
+        ///
+        /// Отказ едет в МОДЕЛИ, а не отдельным вызовом, ровно по той же причине, по которой
+        /// здесь едет всё остальное: модель — единственный канал от данных к экрану, и второй
+        /// канал означал бы, что окно может показать отказ от одного состояния поверх цифр
+        /// от другого. Заодно это само решает главную беду всплывашек — устаревание:
+        /// строку выдаёт <c>MetaScreensBinding</c> ОДИН РАЗ (см. там <c>ConsumeRefusal</c>),
+        /// поэтому следующая перерисовка гасит её сама, и «нет слота» не переезжает
+        /// с колоды в лавку.
+        /// </summary>
+        public string Refusal;
     }
 
     public enum ShopOfferKind
@@ -183,5 +200,8 @@ namespace Meta.Models
         public ShopOfferView[] Offers = Array.Empty<ShopOfferView>();
 
         public int Yarn;
+
+        /// <inheritdoc cref="DeckScreenModel.Refusal"/>
+        public string Refusal;
     }
 }

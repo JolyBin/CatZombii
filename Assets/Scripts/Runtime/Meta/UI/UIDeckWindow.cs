@@ -25,7 +25,7 @@ namespace Meta.UI
     ///
     /// ТОЧКА ПОДКЛЮЧЕНИЯ ДАННЫХ — <see cref="Init"/>.
     /// </summary>
-    public class UIDeckWindow : UIWindow
+    public class UIDeckWindow : UIMetaWindow
     {
         /// <summary>Тап по слоту колоды. Отдаёт индекс слота, 0-based.</summary>
         public event Action<int> OnSlotClick;
@@ -68,6 +68,7 @@ namespace Meta.UI
         public void Init(DeckScreenModel model)
         {
             ReleaseItems();
+            SetRefusal(model?.Refusal);
 
             if (model == null)
                 return;

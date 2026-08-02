@@ -24,7 +24,7 @@ namespace Meta.UI
     ///
     /// ТОЧКА ПОДКЛЮЧЕНИЯ ДАННЫХ — <see cref="Init"/>.
     /// </summary>
-    public class UIShopWindow : UIWindow
+    public class UIShopWindow : UIMetaWindow
     {
         /// <summary>
         /// Покупка ПОДТВЕРЖДЕНА игроком. Отдаёт <see cref="ShopOfferView.Id"/>.
@@ -62,6 +62,7 @@ namespace Meta.UI
         {
             ReleaseOffers();
             CloseConfirm();
+            SetRefusal(model?.Refusal);
 
             if (model == null)
                 return;

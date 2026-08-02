@@ -44,7 +44,7 @@ namespace Meta
 
         /// <summary>
         /// Страховка, а не точка сохранения. Прогресс пишется там, где он меняется
-        /// (см. <c>HomeController.AddConfigIndex</c> и <c>HeroController</c>), поэтому
+        /// (см. <c>HomeController.RegisterNodeCleared</c> и <c>HeroController</c>), поэтому
         /// здесь почти всегда нечего делать — <c>FlushIfDirty</c> это и проверяет.
         ///
         /// Нужна ради веба: свёрнутую вкладку браузер вправе выгрузить без предупреждения,
@@ -57,5 +57,13 @@ namespace Meta
         }
 
         private void OnApplicationQuit() => Saves.FlushIfDirty();
+
+        /// <summary>
+        /// Единственная точка разбора: сцена одна, значит её выгрузка (в редакторе —
+        /// выход из Play Mode) и есть конец сессии. Без этого события меты и карты
+        /// пережили бы Play Mode ссылками на уничтоженные окна — тот самый класс
+        /// утечек, ради которого в проекте заведён <c>IAction.ClearAction</c>.
+        /// </summary>
+        private void OnDestroy() => _homeController?.Exit();
     }
 }

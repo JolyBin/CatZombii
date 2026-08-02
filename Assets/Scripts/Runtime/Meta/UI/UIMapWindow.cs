@@ -23,7 +23,7 @@ namespace Meta.UI
     /// не знает: ни про <c>BattleConfig</c>, ни про профиль, ни про то, откуда
     /// берётся признак «пройден».
     /// </summary>
-    public class UIMapWindow : UIWindow
+    public class UIMapWindow : UIMetaWindow
     {
         /// <summary>Выбран узел. Число — <see cref="MapNodeView.Number"/>, 1-based.</summary>
         public event Action<int> OnNodeClick;
@@ -51,6 +51,7 @@ namespace Meta.UI
         public void Init(MapScreenModel model)
         {
             ReleaseNodes();
+            SetRefusal(model?.Refusal);
 
             if (model == null)
                 return;

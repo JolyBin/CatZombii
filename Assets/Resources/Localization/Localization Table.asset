@@ -202,6 +202,9 @@ MonoBehaviour:
   - Key: map.progress
     Russian: "\u041F\u0440\u043E\u0439\u0434\u0435\u043D\u043E {0} \u0438\u0437 {1}"
     English: 
+  - Key: map.error_node_locked
+    Russian: "\u042D\u0442\u043E\u0442 \u0443\u0437\u0435\u043B \u0435\u0449\u0451 \u0437\u0430\u043A\u0440\u044B\u0442"
+    English: 
   - Key: deck.title
     Russian: "\u041A\u043E\u043B\u043E\u0434\u0430"
     English: 
