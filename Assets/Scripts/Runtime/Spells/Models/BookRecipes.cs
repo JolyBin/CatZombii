@@ -67,6 +67,11 @@ namespace Core.Spells
         private readonly Dictionary<string, Combination> _byId;
         private readonly List<string> _ids;
 
+        /// <summary>Стартовая колода в порядке выдачи: префикс всегда раньше своего наследника.</summary>
+        private readonly List<string> _starters;
+
+        private readonly HashSet<string> _starterSet;
+
         public Book Book { get; }
 
         /// <summary>Идентификаторы всех рецептов книги в порядке ассета.</summary>
@@ -97,6 +102,9 @@ namespace Core.Spells
             }
 
             Vocabulary = SpellDeck.CollectUniqElements(combinations);
+
+            _starters = ResolveStarters(book);
+            _starterSet = new HashSet<string>(_starters, StringComparer.Ordinal);
         }
 
         /// <summary>
@@ -166,36 +174,47 @@ namespace Core.Spells
 
         /// <summary>
         /// СТАРТОВЫЕ РЕЦЕПТЫ — те, что игрок получает вместе с героем и не покупает
-        /// (docs/10 §14.4: «открыто с начала — оба рецепта длины 1 своего героя»;
-        /// §15.4: «узел 1 — Барсик, 4 слота, два рецепта длины 1 бесплатно»).
+        /// (docs/10 §14.4, §15.4, §17.2). Порядок значащий: префикс всегда раньше
+        /// своего наследника, потому что <c>HeroLoadout.EnsureStarterDeck</c> надевает
+        /// их подряд и упирается в число слотов.
         ///
-        /// ЭТО ВСЕ РЕЦЕПТЫ САМОЙ КОРОТКОЙ ДЛИНЫ, КАКАЯ ЕСТЬ В КНИГЕ, а не буквально
-        /// «длины 1». Разница появилась не из вкуса, а из контента: длина 1 есть только
-        /// у Воина. У Некроманта, Мага и Чародейки самый короткий рецепт — длины 2,
-        /// и буквальное правило оставило бы их без стартовой колоды вовсе, то есть
-        /// с пустым пулом стихий и неиграбельным героем.
+        /// ═══ ДВА ИСТОЧНИКА, И ПЕРВЫЙ ГЛАВНЕЕ ═══
         ///
-        /// Для книги, собранной по §14.4 (два рецепта длины 1), правило даёт ровно то,
-        /// что написано в документе. Для любой другой — «самое дешёвое, чем этот герой
-        /// умеет играть», что и есть смысл стартовой выдачи.
+        ///  1. <b>Явный список в самой книге</b> (<see cref="Book.StarterRecipes"/>).
+        ///     Заполнен — он и есть ответ.
+        ///  2. Пусто — <b>прежнее правило</b>: все рецепты самой короткой длины, какая
+        ///     есть в книге (<see cref="ShortestLength"/>).
         ///
-        /// Выведено из данных, а не перечислено списком: список сломался бы от любой
-        /// правки книги. Побочно закрывается вырожденный случай — стартовых рецептов
-        /// не может не быть, поэтому колода непуста по построению.
+        /// ПОЧЕМУ ПОНАДОБИЛСЯ ЯВНЫЙ СПИСОК, если правило «выводится из данных» звучит
+        /// надёжнее. Потому что оно выводит НЕ ТО. Стартовая колода — это дизайнерское
+        /// решение «с чем игрок садится в первый бой», и оно не обязано совпадать
+        /// с формальным признаком «самый короткий рецепт»:
+        ///
+        ///  · docs/10 §17.2 требует выдать Воину ТРЕТИЙ рецепт — <c>Огонь &gt; Огонь</c>,
+        ///    длины 2, — потому что с двумя рецептами длины 1 решение «забрать сейчас
+        ///    или достроить» не существует как таковое: достраивать не во что. Правило
+        ///    по длине этот рецепт выдать не может в принципе.
+        ///  · «Добавить всем один рецепт длины 2» тоже не работает: у Некроманта,
+        ///    Мага и Чародейки самый короткий рецепт УЖЕ длины 2, и такая добавка либо
+        ///    ничего не изменит, либо раздаст лишнее.
+        ///
+        /// Отсюда форма: решение записывается там, где его принимают, — в книге, ассетом,
+        /// без правки кода. Правило по длине остаётся ФОЛБЭКОМ, а не вторым мнением:
+        /// оно отвечает только за книги, которым стартовую колоду ещё не назначили
+        /// (сегодня это Некромант, Маг, Чародейка и книги замера такта), и заодно
+        /// закрывает вырожденный случай — стартовых рецептов не может не быть,
+        /// поэтому колода непуста по построению.
+        ///
+        /// ═══ ПРЕФИКСЫ ДОБАВЛЯЮТСЯ САМИ ═══
+        ///
+        /// Закон §13.2 требует, чтобы вместе с <c>Огонь &gt; Огонь</c> в колоде лежал
+        /// <c>Огонь</c>. Стартовый список замыкается по существующим префиксам, иначе
+        /// выданный рецепт не прошёл бы <c>HeroLoadout.CanEquip</c> и был бы выброшен
+        /// из колоды при первой же починке сейва — то есть подарок молча исчез бы.
+        /// Несуществующий префикс (промежуточный узел дерева) пропускается — так же,
+        /// как в <see cref="RequiredPrefixes"/>.
         /// </summary>
-        public List<string> StarterRecipes()
-        {
-            List<string> starters = new List<string>();
-            int shortest = ShortestLength;
-            if (shortest <= 0)
-                return starters;
-
-            foreach (string id in _ids)
-                if (RecipeId.Length(id) == shortest)
-                    starters.Add(id);
-
-            return starters;
-        }
+        public List<string> StarterRecipes() => new List<string>(_starters);
 
         /// <summary>Длина самого короткого рецепта книги. 0 — рецептов нет вовсе.</summary>
         public int ShortestLength
@@ -213,9 +232,82 @@ namespace Core.Spells
             }
         }
 
-        /// <summary>Бесплатный ли это рецепт — выдаётся с героем и в лавке не показывается.</summary>
+        /// <summary>
+        /// Бесплатный ли это рецепт — выдаётся с героем и в лавке не показывается.
+        ///
+        /// Спрашивает ТОТ ЖЕ набор, что отдаёт <see cref="StarterRecipes"/>, а не считает
+        /// признак заново: две формулировки одного правила разъехались бы молча, и разъезд
+        /// выглядел бы как «рецепт и выдан бесплатно, и продаётся в лавке» (или наоборот —
+        /// «куплен за клубки, а мета считает его подарком и стирает покупку»).
+        /// </summary>
         public bool IsStarter(string recipeId)
-            => Exists(recipeId) && RecipeId.Length(recipeId) == ShortestLength;
+            => !string.IsNullOrEmpty(recipeId) && _starterSet.Contains(recipeId);
+
+        /// <summary>
+        /// Разбор стартовой колоды книги — один раз на книгу, вместе с самим разбором.
+        /// Порядок разобран в <see cref="StarterRecipes"/>; здесь только исполнение.
+        /// </summary>
+        private List<string> ResolveStarters(Book book)
+        {
+            List<string> declared = new List<string>();
+            int dropped = 0;
+
+            foreach (Combination combination in book == null ? Array.Empty<Combination>() : book.StarterRecipes)
+            {
+                string id = RecipeId.Of(combination);
+
+                // Ассет мог быть удалён, вынут из книги или указан дважды. Ни один
+                // из случаев не повод падать: стартовая колода — это подарок, а не закон.
+                if (string.IsNullOrEmpty(id) || !_byId.ContainsKey(id))
+                {
+                    dropped++;
+                    continue;
+                }
+                if (!declared.Contains(id))
+                    declared.Add(id);
+            }
+
+            if (dropped > 0)
+                Debug.LogWarning($"[Книга] В стартовой колоде «{(book == null ? "?" : book.name)}» " +
+                                 $"пропущено записей: {dropped}. Комбинации нет в списке рецептов этой книги " +
+                                 "(или ссылка пуста) — выдать её игроку нельзя.");
+
+            List<string> source = declared.Count > 0 ? declared : ShortestRecipes();
+
+            // Замыкание по префиксам (закон §13.2). Префикс кладётся ПЕРЕД наследником:
+            // EnsureStarterDeck надевает список подряд и на нехватке слотов обрывается,
+            // а оборваться он обязан на длинном рецепте, а не на его основании.
+            List<string> closed = new List<string>(source.Count);
+            foreach (string id in source)
+            {
+                foreach (string prefix in RequiredPrefixes(id))
+                    if (!closed.Contains(prefix))
+                        closed.Add(prefix);
+
+                if (!closed.Contains(id))
+                    closed.Add(id);
+            }
+
+            return closed;
+        }
+
+        /// <summary>
+        /// ПРАВИЛО-ФОЛБЭК: все рецепты самой короткой длины книги. Работает, только пока
+        /// стартовая колода и «самое дешёвое, чем герой умеет играть» — это одно и то же.
+        /// </summary>
+        private List<string> ShortestRecipes()
+        {
+            List<string> shortest = new List<string>();
+            int length = ShortestLength;
+            if (length <= 0)
+                return shortest;
+
+            foreach (string id in _ids)
+                if (RecipeId.Length(id) == length)
+                    shortest.Add(id);
+
+            return shortest;
+        }
 
         /// <summary>Сколько слотов колоды займёт этот рецепт вместе с обязательными префиксами.</summary>
         public int SlotCost(string recipeId, ICollection<string> alreadyEquipped)

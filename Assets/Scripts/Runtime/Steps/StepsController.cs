@@ -48,6 +48,22 @@ namespace Core.Steps
         /// </summary>
         private CancellationTokenSource _partyCts;
 
+        /// <summary>
+        /// КНИГА В БОЮ (docs/10 §17.1) — кнопка и оверлей с ЭКИПИРОВАННЫМИ рецептами.
+        ///
+        /// Живёт здесь, а не в боевом окне, по двум причинам. Первая: оверлей —
+        /// созданные кодом объекты на чужом окне, и разбирать их обязан тот, кто их
+        /// завёл, то есть партия (<see cref="Exit"/>), а не сцена. Вторая: показывать
+        /// он должен КОЛОДУ, а колода приезжает сюда конструктором и дальше боевого окна
+        /// не идёт — окну от книги нужны только HP, имя и иконка героя.
+        ///
+        /// Открытие НЕ ТИКАЕТ часами мира и не может: тактов здесь никто не раздаёт.
+        /// </summary>
+        private readonly UIBookOverlay _bookOverlay = new UIBookOverlay();
+
+        /// <summary>Колода партии — источник и для котла, и для колб, и для книги в бою.</summary>
+        private readonly SpellDeck _deck;
+
 
         /// <summary>
         /// ПАРТИЯ СОБИРАЕТСЯ ИЗ КОЛОДЫ, А НЕ ИЗ КНИГИ — закон docs/10 §13.1.
@@ -64,6 +80,7 @@ namespace Core.Steps
         /// </summary>
         public StepsController(IUIService uIService, SpellDeck deck, HomeController homeController, BattleConfig currentlevel)
         {
+            _deck = deck;
             _currentBook = deck.Book;
             _flaskController = new FlaskController(uIService, deck.UniqElements);
             _tableController = new TableController(deck.Combinations, _flaskController, uIService);
@@ -77,6 +94,8 @@ namespace Core.Steps
             _partyCts = new CancellationTokenSource();
             _window = _uiService.Show<UIBattleWindow>();
             _window.Init(_currentBook);
+            _bookOverlay.Attach(_window, _deck);
+            _bookOverlay.OnOpenChanged += HandleBookOpenChanged;
             _flaskController.Init();
             _window.OnClickHomeButton += Exit;
             _flaskController.SubscribeToMove();
@@ -115,6 +134,13 @@ namespace Core.Steps
 
             _window.OnClickHomeButton -= Exit;
             _window.Hide();
+
+            // Оверлей книги — созданные кодом объекты на боевом окне. Окно переживает
+            // партию (оно сценовое), поэтому без этой строки кнопка книги осталась бы
+            // висеть и в следующей партии, показывая колоду предыдущей.
+            _bookOverlay.OnOpenChanged -= HandleBookOpenChanged;
+            _bookOverlay.ClearAction();
+
             _flaskController.Exit();
             _tableController.Exit();
             _battleController.Exit();
@@ -131,6 +157,30 @@ namespace Core.Steps
         }
 
         /// <summary>
+        /// КНИГА ОТКРЫТА — ПАЗЛ ЗАМОЛКАЕТ. Открытие книги по-прежнему НЕ СТОИТ ТАКТА
+        /// (часы мира здесь никто не трогает), но и подарить такт оно не должно:
+        /// затемнение оверлея живёт на канвасе боевого окна, а колбы и котёл — на своих
+        /// вложенных канвасах, и перекрытие между ними это сценовое свойство. Тап сквозь
+        /// открытый справочник означал бы ход, которого игрок не делал.
+        ///
+        /// Обратная сторона зовётся только на РЕШЕНИЕ ИГРОКА закрыть книгу: конец партии
+        /// закрывает оверлей молча, иначе разблокировка отменила бы заглушку, которую
+        /// только что поставила <see cref="FinishParty"/>.
+        /// </summary>
+        private void HandleBookOpenChanged(bool isOpen)
+        {
+            if (isOpen)
+            {
+                _flaskController.LockInput();
+                _tableController.LockInput();
+                return;
+            }
+
+            _flaskController.UnlockInput();
+            _tableController.UnlockInput();
+        }
+
+        /// <summary>
         /// Партия кончилась любым исходом: мир останавливается и перестаёт принимать
         /// действия. Это и есть вторая половина бага №12 — пазл больше не живёт
         /// под окном итога. Пошаговость делает лечение полным: остановить приём
@@ -141,6 +191,11 @@ namespace Core.Steps
             _worldClock?.Stop();
             _flaskController.LockInput();
             _tableController.LockInput();
+
+            // Книга замолкает вместе с ними: открытый справочник поверх окна итога
+            // читается как «партия ещё идёт», а под окном итога он к тому же
+            // перехватывал бы тапы по кнопке «продолжить».
+            _bookOverlay.LockInput();
 
             // КНОПКА «ДОМОЙ» БОЕВОГО ОКНА ТОЖЕ ЗАМОЛКАЕТ. Она уводит через Exit(),
             // МИНУЯ HomeController.RegisterNodeCleared — то есть выигранный узел не
@@ -220,6 +275,7 @@ namespace Core.Steps
 
             _flaskController.UnlockInput();
             _tableController.UnlockInput();
+            _bookOverlay.UnlockInput();
 
             // Партия снова живая — значит и выход из неё снова живой. Парно к тому,
             // что сняла FinishParty; без этого воскресший игрок остался бы в бою

@@ -28,6 +28,32 @@
         /// </summary>
         public const string WinReward = "win.reward";
 
+        #region Бой: книга рецептов (docs/10 §17.1)
+
+        // Оверлей строится кодом (Core.Steps.UI.UIBookOverlay), объектов в сцене у него
+        // нет — значит и LocalizedText вешать не на что, и ключи живут здесь.
+
+        /// <summary>Боевой экран: подпись кнопки, открывающей книгу.</summary>
+        public const string BattleBookOpen = "battle.book_open";
+
+        /// <summary>Книга в бою: заголовок оверлея.</summary>
+        public const string BattleBookTitle = "battle.book_title";
+
+        /// <summary>
+        /// Книга в бою: пояснение, ПОЧЕМУ рецептов меньше, чем в книге героя.
+        /// Показывается экипированное (docs/10 §17.1), и молчание об этом читалось бы
+        /// как «часть рецептов пропала».
+        /// </summary>
+        public const string BattleBookHint = "battle.book_hint";
+
+        /// <summary>Книга в бою: колода пуста (битый сейв — законы меты такого не разрешают).</summary>
+        public const string BattleBookEmpty = "battle.book_empty";
+
+        /// <summary>Книга в бою: кнопка «закрыть».</summary>
+        public const string BattleBookClose = "battle.book_close";
+
+        #endregion
+
         #region Мета: карта узлов, колода, лавка (docs/10 §13)
 
         /// <summary>Карта: подпись узла — «Узел {0}».</summary>

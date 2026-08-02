@@ -23,6 +23,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d3fb23ea5701d9a49bc2ef233b44b6bf, type: 2}
   - {fileID: 11400000, guid: fa60a80ba65f1d348aae4ed8b01621db, type: 2}
   - {fileID: 11400000, guid: 869bb63d1fbcec04d9f27a4bf64ed3e8, type: 2}
+  _starterRecipes:
+  - {fileID: 11400000, guid: cdc642b0bc5269b41880a9847f83fd00, type: 2}
+  - {fileID: 11400000, guid: 1db37fda16e9f384b85826aa720bf621, type: 2}
+  - {fileID: 11400000, guid: fa60a80ba65f1d348aae4ed8b01621db, type: 2}
   _uniqElements:
   - {fileID: 11400000, guid: f218f900823979f418512da3d93cfc2f, type: 2}
   - {fileID: 11400000, guid: 98057fa97ee93e342a415183e5a39e9a, type: 2}

@@ -24,16 +24,18 @@ namespace Utility.Services.UI
     /// <c>null</c> из <c>Show&lt;T&gt;()</c>, а <c>[SerializeField]</c>-панель в каждом
     /// окне — ручная привязка, без которой фича не работает МОЛЧА.
     ///
-    /// ⚠️ Этот класс — вынесенная наружу версия того же приёма, и он существует только
-    /// потому, что окна меты (<c>Meta/UI</c>) в этой правке трогать было нельзя. Когда
-    /// <c>UIMetaWindow.SetRefusal</c> будет переписан на него, в проекте останется одна
-    /// полоса вместо двух одинаковых. До тех пор — две, и это известный долг.
+    /// ⚠️ ЭТО ЕДИНСТВЕННАЯ ПОЛОСА В ПРОЕКТЕ. Раньше их было две: этот класс появился
+    /// как вынесенная наружу копия <c>Meta.UI.UIMetaWindow.SetRefusal</c>, потому что
+    /// окна меты в той правке трогать было нельзя. Долг закрыт — <c>UIMetaWindow</c>
+    /// теперь держит экземпляр этого класса и ничего своего не рисует. Новая полоса
+    /// сообщений в проекте не заводится: сюда добавляется параметр, а не третья копия.
     ///
     /// ═══ ДВЕ МЕЛОЧИ, БЕЗ КОТОРЫХ ОНА БЫ СЛОМАЛАСЬ ═══
     ///
     /// ШРИФТ берётся у соседнего текста окна, а не у TMP по умолчанию: дефолтный
     /// <c>LiberationSans SDF</c> собран без кириллицы, и русское сообщение стало бы
-    /// рядом квадратов (у проекта уже была такая история, docs/08 §3).
+    /// рядом квадратов (у проекта уже была такая история, docs/08 §3). Сам приём —
+    /// в <see cref="Utility.UI.UIFonts"/>, потому что он нужен всем, кто строит UI кодом.
     ///
     /// КЛИКИ полоса не перехватывает (<c>raycastTarget = false</c> у обоих графиков):
     /// она висит над карточками, и «кнопка перестала нажиматься» — худшее, чем может
@@ -113,7 +115,7 @@ namespace Utility.Services.UI
         private void Build()
         {
             // Шрифт — ДО создания собственного текста: иначе нашли бы сами себя.
-            TMP_FontAsset font = BorrowFont();
+            TMP_FontAsset font = UIFonts.BorrowFrom(_host);
 
             GameObject bannerObject = new GameObject("NoticeBanner", typeof(RectTransform), typeof(Image));
             _banner = bannerObject.GetComponent<RectTransform>();
@@ -148,16 +150,6 @@ namespace Utility.Services.UI
             _label.textWrappingMode = TextWrappingModes.Normal;
             _label.overflowMode = TextOverflowModes.Truncate;
             _label.raycastTarget = false;
-        }
-
-        /// <summary>
-        /// Взять шрифт у любого текста этого же окна. Он заведомо умеет кириллицу —
-        /// иначе окно было бы нечитаемым и без нас.
-        /// </summary>
-        private TMP_FontAsset BorrowFont()
-        {
-            TextMeshProUGUI neighbour = _host.GetComponentInChildren<TextMeshProUGUI>(true);
-            return neighbour == null ? null : neighbour.font;
         }
     }
 }
