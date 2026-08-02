@@ -1,0 +1,34 @@
+﻿Free Water and Fire Magic Sprite Vector Pack — CraftPix
+Страница пака: https://craftpix.net/freebies/free-water-and-fire-magic-sprite-vector-pack/
+Цена: $0 (freebie)
+Дата регистрации в репозитории: 02.08.2026
+Файл лицензии в архиве: ОТСУТСТВОВАЛ
+
+Источник лицензии: https://craftpix.net/file-licenses/  (раздел Freebies)
+Текст восстановлен вручную с сайта первоисточника 02.08.2026.
+
+--- РАЗРЕШЕНО (дословно) ---
+
+  "You are permitted to use the resources in any number of personal and
+   commercial projects"
+
+  "You can sell and distribute games with our assets"
+
+  "No attribution or link back to this site is required, however any credit
+   will be highly appreciated."
+
+--- ЗАПРЕЩЕНО (дословно) ---
+
+  "You can NOT resell the source files (PNG, JPG, EPS, Adobe Illustrator, etc)"
+
+  Запрещено распространять арт "in a manner that would make some or all of the
+  art files useable to another end user"
+
+  "The Licensed Assets ... may not be used, in whole or in part, for the purposes
+   of training, fine-tuning, developing, testing, validating, or improving any
+   artificial intelligence (AI), machine learning (ML) ... systems"
+
+--- ВЫВОД ---
+
+  Коммерческий WebGL-билд на Яндекс.Играх РАЗРЕШЁН.
+  Запрет касается перепродажи исходников и обучения AI/ML, а не самой игры.
